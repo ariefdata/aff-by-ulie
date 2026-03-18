@@ -37,10 +37,15 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<View>('DASHBOARD')
   
+  const [isPushEnabled, setIsPushEnabled] = useState(false)
+  
   useEffect(() => {
-    // Register Push Service
-    pushService.register()
-
+    const checkPush = async () => {
+      const sub = await pushService.getSubscription()
+      setIsPushEnabled(!!sub)
+    }
+    checkPush()
+    
     // Check for SIM Alerts
     const alertedAccounts = accounts.filter(a => getSimStatus(a.sim_expiry).alert)
     if (alertedAccounts.length > 0) {
@@ -50,6 +55,16 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       )
     }
   }, [accounts])
+
+  const handlePushToggle = async () => {
+    if (isPushEnabled) {
+      const success = await pushService.unsubscribe()
+      if (success) setIsPushEnabled(false)
+    } else {
+      const sub = await pushService.register()
+      if (sub) setIsPushEnabled(true)
+    }
+  }
   
   // Form State
   const [newAcc, setNewAcc] = useState<Partial<Account>>({
@@ -154,10 +169,16 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                   <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
                     <div>
                       <p className="text-sm font-bold text-white">Push Notifications</p>
-                      <p className="text-[10px] text-slate-500">Alert SIM & Deadline Sampel</p>
+                      <p className="text-[10px] text-slate-500 italic opacity-60">Alert SIM & Deadline Sampel</p>
                     </div>
-                    <div className="w-12 h-6 bg-accent/20 rounded-full relative cursor-pointer">
-                       <div className="absolute right-1 top-1 w-4 h-4 bg-accent rounded-full shadow-lg" />
+                    <div 
+                      onClick={handlePushToggle}
+                      className={`w-12 h-6 rounded-full relative cursor-pointer transition-all duration-300 ${isPushEnabled ? 'bg-rose-900' : 'bg-slate-800'}`}
+                    >
+                       <motion.div 
+                        animate={{ x: isPushEnabled ? 24 : 0 }}
+                        className={`absolute left-1 top-1 w-4 h-4 rounded-full shadow-lg ${isPushEnabled ? 'bg-rose-400' : 'bg-slate-600'}`} 
+                       />
                     </div>
                   </div>
                   
