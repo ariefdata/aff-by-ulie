@@ -9,7 +9,7 @@ import { TrendingUp, DollarSign } from 'lucide-react'
 
 const data: any[] = []
 
-const COLORS = ['#fbbf24', '#1e1b4b', '#334155', '#475569']
+const COLORS = ['#e11d48', '#881337', '#4c0519', '#fb7185']
 
 export default function FinancialCharts() {
   return (

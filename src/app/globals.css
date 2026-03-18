@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --primary: #1e1b4b;
-  --primary-foreground: #e2e8f0;
-  --accent: #fbbf24;
-  --accent-foreground: #1e1b4b;
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --border: #334155;
-  --input: #334155;
-  --ring: #fbbf24;
-  --radius: 0.75rem;
+  --background: #0f0508;
+  --foreground: #fff1f2;
+  --primary: #4c0519;
+  --primary-foreground: #ffe4e6;
+  --accent: #e11d48;
+  --accent-foreground: #ffffff;
+  --card: #1c0a0f;
+  --card-foreground: #fff1f2;
+  --border: #881337;
+  --input: #4c0519;
+  --ring: #e11d48;
+  --radius: 1rem;
 }
 
 @theme inline {
@@ -35,21 +35,29 @@ body {
   color: var(--foreground);
   font-feature-settings: "rlig" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(340, 100%, 10%, 1) 0, transparent 50%), 
+    radial-gradient(at 100% 100%, hsla(340, 100%, 5%, 1) 0, transparent 50%);
 }
 
 .glass {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 5, 10, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(225, 29, 72, 0.1);
 }
 
 .premium-gradient {
-  background: linear-gradient(135deg, #1e1b4b 0%, #020617 100%);
+  background: linear-gradient(135deg, #4c0519 0%, #0f0508 100%);
 }
 
 .accent-glow {
-  box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+  box-shadow: 0 0 25px rgba(225, 29, 72, 0.3);
+}
+
+.srikandi-border {
+  border-bottom: 2px solid transparent;
+  background: linear-gradient(to right, #4c0519, #e11d48, #4c0519) border-box;
 }
 
 @keyframes float {
@@ -60,4 +68,15 @@ body {
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(225, 29, 72, 0.2);
+  border-radius: 10px;
 }

@@ -10,6 +10,8 @@ import Image from 'next/image'
 import { Account, accountService } from '@/services/accountService'
 import { getSimStatus } from '@/utils/simLogic'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
+import { useRouter } from 'next/navigation'
 import { pushService } from '@/services/pushService'
 import SampleTracker from './SampleTracker'
 import FinancialCharts from './FinancialCharts'
@@ -23,7 +25,14 @@ interface DashboardClientProps {
 type View = 'DASHBOARD' | 'ACCOUNTS' | 'SAMPLES' | 'ANALYTICS' | 'SETTINGS'
 
 export default function DashboardClient({ initialUser, initialAccounts }: DashboardClientProps) {
+  const router = useRouter()
+  const supabase = createClient()
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts)
+  
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<View>('DASHBOARD')
@@ -164,10 +173,13 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                </div>
             </div>
             
-            <div className="glass p-8 rounded-3xl border border-white/5 bg-red-500/5 border-red-500/10">
-               <h3 className="text-sm font-bold text-red-400 mb-4 uppercase tracking-widest">Zone Bahaya</h3>
+            <div className="glass p-8 rounded-3xl border border-white/5 bg-rose-500/5 border-rose-500/10">
+               <h3 className="text-sm font-bold text-rose-400 mb-4 uppercase tracking-widest">Zone Bahaya</h3>
                <p className="text-xs text-slate-500 mb-6">Keluar dari sesi ini akan menghapus akses cepat hingga Anda login kembali.</p>
-               <button className="flex items-center gap-2 px-6 py-3 bg-red-500/10 text-red-500 rounded-xl text-sm font-bold hover:bg-red-500/20 transition-all">
+               <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-500 rounded-xl text-sm font-bold hover:bg-rose-500/20 transition-all"
+               >
                   <LogOut size={16} /> Keluar Sekarang
                </button>
             </div>
@@ -184,23 +196,32 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       <aside className="hidden md:flex w-64 flex-col glass border-r border-white/10 p-6 fixed h-full z-20">
         <div className="flex items-center gap-3 mb-12">
           <Image src="/logo.png" alt="Logo" width={40} height={40} className="accent-glow rounded-xl" />
-          <h2 className="text-xl font-bold text-white tracking-tighter">Aff by <span className="text-accent">Ulie</span></h2>
+          <h2 className="text-xl font-bold text-white tracking-tighter uppercase">Srikandi <span className="text-rose-500">Elite</span></h2>
         </div>
 
         <nav className="flex-1 space-y-1">
-          <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
-          <NavItem icon={<Users size={18} />} label="Akun Shopee" active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
-          <NavItem icon={<Smartphone size={18} />} label="Manajemen SIM" onClick={() => setActiveView('ACCOUNTS')} />
+          <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard Control" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
+          <NavItem icon={<Users size={18} />} label="Shopee Accounts" active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
+          <NavItem icon={<Smartphone size={18} />} label="SIM Intelligence" onClick={() => setActiveView('ACCOUNTS')} />
           <NavItem icon={<Package size={18} />} label="Sampel & Logistik" active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
           <NavItem icon={<TrendingUp size={18} />} label="Analitik Komisi" active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/10 space-y-1">
           <NavItem icon={<Settings size={18} />} label="Pengaturan" active={activeView === 'SETTINGS'} onClick={() => setActiveView('SETTINGS')} />
-          <button className="flex items-center gap-3 w-full px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all group">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-4 py-3 text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all group"
+          >
             <LogOut size={18} />
             <span className="text-sm font-medium">Keluar</span>
           </button>
+          
+          <div className="mt-4 px-4">
+            <p className="text-[9px] text-rose-400/40 uppercase font-black tracking-[0.3em] leading-relaxed">
+              Dedicated to<br/>Shen Won-won
+            </p>
+          </div>
         </div>
       </aside>
 
@@ -208,8 +229,8 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       <main className="flex-1 md:ml-64 p-4 md:p-8 pb-32 md:pb-8">
         <header className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">{activeView === 'DASHBOARD' ? 'System Control Panel' : activeView}</h1>
-            <p className="text-slate-400 text-sm italic opacity-70">Authenticated as: <span className="text-accent font-medium">{initialUser.email}</span></p>
+            <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">{activeView === 'DASHBOARD' ? 'Elite Control Panel' : activeView}</h1>
+            <p className="text-rose-400/60 text-[10px] uppercase font-bold tracking-widest">Dedicated to Shen Won-won</p>
           </div>
           <button 
             onClick={() => setIsAddModalOpen(true)}
