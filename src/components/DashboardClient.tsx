@@ -101,6 +101,9 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   // Form State
   // ... (rest of code)
   const [newAcc, setNewAcc] = useState<Partial<Account>>({
+    sim_status: 'ACTIVE',
+    samples_count: 0,
+    income_total: 0,
     nickname: '',
     device_name: '',
     shopee_user: '',
@@ -449,23 +452,55 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                   <X size={24} />
                 </button>
               </div>
-              <form onSubmit={handleAddAccount} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormInput label="Nickname Shopee" value={newAcc.nickname || ''} onChange={(v: string) => setNewAcc({...newAcc, nickname: v})} required placeholder="e.g. Ulie_Shop_01" />
-                  <FormInput label="Detail Device (HP)" value={newAcc.device_name || ''} onChange={(v: string) => setNewAcc({...newAcc, device_name: v})} placeholder="e.g. Infinix - HP 01" />
-                  <FormInput label="Username Shopee" value={newAcc.shopee_user || ''} onChange={(v: string) => setNewAcc({...newAcc, shopee_user: v})} required />
-                  <FormInput label="Password Shopee" type="password" value={newAcc.shopee_pass || ''} onChange={(v: string) => setNewAcc({...newAcc, shopee_pass: v})} required />
-                  <FormInput label="Email Address" value={newAcc.email_addr || ''} onChange={(v: string) => setNewAcc({...newAcc, email_addr: v})} />
-                  <FormInput label="Email Password" type="password" value={newAcc.email_pass || ''} onChange={(v: string) => setNewAcc({...newAcc, email_pass: v})} />
-                  <FormInput label="Nomor WA (Pusat)" value={newAcc.wa_number || ''} onChange={(v: string) => setNewAcc({...newAcc, wa_number: v})} placeholder="08..." />
-                  <FormInput label="Masa Aktif SIM" type="date" value={newAcc.sim_expiry || ''} onChange={(v: string) => setNewAcc({...newAcc, sim_expiry: v})} />
+              <form onSubmit={handleAddAccount} className="p-6 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar pb-24">
+                <div className="space-y-6">
+                  {/* Account Basics */}
+                  <section>
+                    <h3 className="text-rose-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                       <LayoutDashboard size={14} /> Shopee Asset
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormInput label="Nickname Shopee" value={newAcc.nickname || ''} onChange={(v: string) => setNewAcc({...newAcc, nickname: v})} required placeholder="e.g. Ulie_Shop_01" />
+                      <FormInput label="Detail Device (HP)" value={newAcc.device_name || ''} onChange={(v: string) => setNewAcc({...newAcc, device_name: v})} placeholder="e.g. Infinix - HP 01" />
+                      <FormInput label="Username Shopee" value={newAcc.shopee_user || ''} onChange={(v: string) => setNewAcc({...newAcc, shopee_user: v})} required />
+                      <FormInput label="Password Shopee" type="password" value={newAcc.shopee_pass || ''} onChange={(v: string) => setNewAcc({...newAcc, shopee_pass: v})} required />
+                    </div>
+                  </section>
+
+                  {/* Email & Communication */}
+                  <section>
+                    <h3 className="text-rose-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                       <Smartphone size={14} /> SIM & Identity
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormInput label="Nomor WA (Pusat)" value={newAcc.wa_number || ''} onChange={(v: string) => setNewAcc({...newAcc, wa_number: v})} placeholder="08..." />
+                      <FormInput label="Masa Aktif SIM" type="date" value={newAcc.sim_expiry || ''} onChange={(v: string) => setNewAcc({...newAcc, sim_expiry: v})} />
+                      <FormInput label="Email Address" value={newAcc.email_addr || ''} onChange={(v: string) => setNewAcc({...newAcc, email_addr: v})} />
+                      <FormInput label="Email Password" type="password" value={newAcc.email_pass || ''} onChange={(v: string) => setNewAcc({...newAcc, email_pass: v})} />
+                      <FormInput label="Nama KTP" value={newAcc.ktp_name || ''} onChange={(v: string) => setNewAcc({...newAcc, ktp_name: v})} />
+                      <FormInput label="Nomor NPWP" value={newAcc.npwp_num || ''} onChange={(v: string) => setNewAcc({...newAcc, npwp_num: v})} />
+                    </div>
+                  </section>
+
+                  {/* Financial & Tracking */}
+                  <section>
+                    <h3 className="text-rose-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                       <TrendingUp size={14} /> Financial & Assets
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormInput label="Nama Bank" value={newAcc.bank_name || ''} onChange={(v: string) => setNewAcc({...newAcc, bank_name: v})} placeholder="e.g. BCA" />
+                      <FormInput label="Nomor Rekening" value={newAcc.bank_acc || ''} onChange={(v: string) => setNewAcc({...newAcc, bank_acc: v})} />
+                      <FormInput label="Total Sampel Diambil" type="number" value={newAcc.samples_count?.toString() || '0'} onChange={(v: string) => setNewAcc({...newAcc, samples_count: parseInt(v) || 0})} />
+                      <FormInput label="Total Komisi (Rp)" type="number" value={newAcc.income_total?.toString() || '0'} onChange={(v: string) => setNewAcc({...newAcc, income_total: parseFloat(v) || 0})} />
+                    </div>
+                  </section>
                 </div>
                 
                 <button 
                   type="submit" 
-                  className="w-full py-4 rounded-2xl bg-accent text-primary font-bold shadow-lg hover:bg-amber-500 transition-all active:scale-[0.98]"
+                  className="w-full py-4 rounded-2xl bg-accent text-primary font-bold shadow-lg hover:bg-amber-500 transition-all active:scale-[0.98] border-b-4 border-amber-800"
                 >
-                  SAVE SYSTEM ASSET
+                  SAVE ASSET TO SYSTEM
                 </button>
               </form>
             </motion.div>

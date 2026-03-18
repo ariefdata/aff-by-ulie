@@ -16,6 +16,8 @@ export interface Account {
   bank_name: string
   bank_acc: string
   doc_img_url: string
+  samples_count: number
+  income_total: number
 }
 
 export const accountService = {
