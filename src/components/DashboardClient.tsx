@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, Users, Smartphone, Package, 
   TrendingUp, Settings, LogOut, Plus, Copy, 
-  Check, AlertTriangle, X, Search, ExternalLink, ChevronRight
+  Check, AlertTriangle, X, Search, ExternalLink, ChevronRight,
+  FileText, Target, CreditCard
 } from 'lucide-react'
 import Image from 'next/image'
 import { Account, accountService } from '@/services/accountService'
