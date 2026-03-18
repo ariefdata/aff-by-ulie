@@ -40,8 +40,18 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   const [isPushEnabled, setIsPushEnabled] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showInstallBanner, setShowInstallBanner] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
+  const [isBannerDismissed, setIsBannerDismissed] = useState(false)
   
   useEffect(() => {
+    // Check if running as standalone
+    const checkStandalone = () => {
+      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+      setIsStandalone(!!isStandaloneMode)
+    }
+    
+    checkStandalone()
+    
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault()
       setDeferredPrompt(e)
@@ -271,29 +281,39 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     <div className="flex min-h-screen">
       {/* Sidebar - Desktop */}
       {/* Top Manual Install Banner (Mobile Only) */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 px-4 pt-4 pointer-events-none">
-        <motion.div 
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="glass p-3 rounded-2xl border border-rose-900/20 shadow-xl flex items-center justify-between pointer-events-auto"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-white/10">
-              <Image src="/logo.png" alt="Srikandi" fill className="object-cover" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-white leading-tight">Srikandi Elite</p>
-              <p className="text-[8px] text-slate-500 uppercase tracking-widest">App Mode</p>
-            </div>
-          </div>
-          <button 
-            onClick={deferredPrompt ? handleInstall : () => alert('Buka menu browser ( ⋮ ) lalu klik "Install App" atau "Tambahkan ke Layar Utama".')}
-            className="px-4 py-2 bg-rose-900 text-rose-100 text-[10px] font-black rounded-lg uppercase tracking-widest border border-white/5"
+      {!isStandalone && !isBannerDismissed && (
+        <div className="md:hidden fixed top-0 left-0 right-0 z-50 px-4 pt-4 pointer-events-none">
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="glass p-3 rounded-2xl border border-rose-900/20 shadow-xl flex items-center justify-between pointer-events-auto"
           >
-            {deferredPrompt ? 'Instal App' : 'Cara Pasang'}
-          </button>
-        </motion.div>
-      </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-white/10">
+                <Image src="/logo.png" alt="Srikandi" fill className="object-cover" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-white leading-tight">Srikandi Elite</p>
+                <p className="text-[8px] text-slate-500 uppercase tracking-widest">App Mode</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={deferredPrompt ? handleInstall : () => alert('Buka menu browser ( ⋮ ) lalu klik "Install App" atau "Tambahkan ke Layar Utama".')}
+                className="px-4 py-2 bg-rose-900 text-rose-100 text-[10px] font-black rounded-lg uppercase tracking-widest border border-white/5 active:scale-95"
+              >
+                {deferredPrompt ? 'Instal App' : 'Cara Pasang'}
+              </button>
+              <button 
+                onClick={() => setIsBannerDismissed(true)}
+                className="p-2 text-slate-500 hover:text-white"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* PWA Install Banner (Bottom Popup) */}
       <AnimatePresence>
