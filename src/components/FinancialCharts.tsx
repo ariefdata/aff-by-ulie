@@ -7,12 +7,7 @@ import {
 } from 'recharts'
 import { TrendingUp, DollarSign } from 'lucide-react'
 
-const data = [
-  { name: 'Ulie_01', income: 4500000 },
-  { name: 'Ulie_02', income: 2100000 },
-  { name: 'Ulie_03', income: 3800000 },
-  { name: 'Ulie_04', income: 1500000 },
-]
+const data: any[] = []
 
 const COLORS = ['#fbbf24', '#1e1b4b', '#334155', '#475569']
 
@@ -29,39 +24,19 @@ export default function FinancialCharts() {
         </div>
       </div>
 
-      <div className="h-[250px] w-full mb-8">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
-            <XAxis 
-              dataKey="name" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: '#94a3b8', fontSize: 10 }}
-            />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: '#94a3b8', fontSize: 10 }}
-              tickFormatter={(v) => `Rp${v/1000000}jt`}
-            />
-            <Tooltip 
-              contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px' }}
-              itemStyle={{ color: '#fbbf24' }}
-            />
-            <Bar dataKey="income" fill="#fbbf24" radius={[6, 6, 0, 0]} barSize={32} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="h-[250px] w-full mb-8 flex flex-col items-center justify-center border border-white/5 rounded-2xl bg-white/5 opacity-50">
+        <DollarSign size={32} className="text-slate-600 mb-2" />
+        <p className="text-slate-500 text-[10px] italic font-mono uppercase tracking-widest">No Commission Data Found</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
            <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Total Komisi</p>
-           <p className="text-xl font-bold text-white tracking-tighter">Rp 11.900.000</p>
+           <p className="text-xl font-bold text-white tracking-tighter">Rp 0</p>
         </div>
         <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
            <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Target Bulan Ini</p>
-           <p className="text-xl font-bold text-slate-400 tracking-tighter">Rp 15jt <span className="text-[10px] text-slate-600">79%</span></p>
+           <p className="text-xl font-bold text-slate-400 tracking-tighter">Rp 0 <span className="text-[10px] text-slate-600">0%</span></p>
         </div>
       </div>
     </div>

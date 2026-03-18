@@ -20,7 +20,7 @@ interface DashboardClientProps {
   initialAccounts: Account[]
 }
 
-type View = 'DASHBOARD' | 'ACCOUNTS' | 'SAMPLES' | 'ANALYTICS'
+type View = 'DASHBOARD' | 'ACCOUNTS' | 'SAMPLES' | 'ANALYTICS' | 'SETTINGS'
 
 export default function DashboardClient({ initialUser, initialAccounts }: DashboardClientProps) {
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts)
@@ -126,6 +126,53 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         return <div className="max-w-4xl mx-auto"><SampleTracker /></div>
       case 'ANALYTICS':
         return <div className="max-w-4xl mx-auto"><FinancialCharts /></div>
+      case 'SETTINGS':
+        return (
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="glass p-8 rounded-3xl border border-white/5">
+               <h3 className="text-xl font-bold text-white mb-6">Profil Pengguna</h3>
+               <div className="flex items-center gap-4 mb-8">
+                  <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center text-2xl font-bold text-primary">
+                    {initialUser.email?.[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-lg">{initialUser.email?.split('@')[0]}</p>
+                    <p className="text-slate-500 text-sm">{initialUser.email}</p>
+                  </div>
+               </div>
+               
+               <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <div>
+                      <p className="text-sm font-bold text-white">Push Notifications</p>
+                      <p className="text-[10px] text-slate-500">Alert SIM & Deadline Sampel</p>
+                    </div>
+                    <div className="w-12 h-6 bg-accent/20 rounded-full relative cursor-pointer">
+                       <div className="absolute right-1 top-1 w-4 h-4 bg-accent rounded-full shadow-lg" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 opacity-50 cursor-not-allowed">
+                    <div>
+                      <p className="text-sm font-bold text-white">Telegram Bot Integration</p>
+                      <p className="text-[10px] text-slate-500">Coming Soon</p>
+                    </div>
+                    <div className="w-12 h-6 bg-slate-800 rounded-full relative">
+                       <div className="absolute left-1 top-1 w-4 h-4 bg-slate-600 rounded-full" />
+                    </div>
+                  </div>
+               </div>
+            </div>
+            
+            <div className="glass p-8 rounded-3xl border border-white/5 bg-red-500/5 border-red-500/10">
+               <h3 className="text-sm font-bold text-red-400 mb-4 uppercase tracking-widest">Zone Bahaya</h3>
+               <p className="text-xs text-slate-500 mb-6">Keluar dari sesi ini akan menghapus akses cepat hingga Anda login kembali.</p>
+               <button className="flex items-center gap-2 px-6 py-3 bg-red-500/10 text-red-500 rounded-xl text-sm font-bold hover:bg-red-500/20 transition-all">
+                  <LogOut size={16} /> Keluar Sekarang
+               </button>
+            </div>
+          </div>
+        )
       default:
         return null
     }
@@ -149,7 +196,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/10 space-y-1">
-          <NavItem icon={<Settings size={18} />} label="Pengaturan" />
+          <NavItem icon={<Settings size={18} />} label="Pengaturan" active={activeView === 'SETTINGS'} onClick={() => setActiveView('SETTINGS')} />
           <button className="flex items-center gap-3 w-full px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all group">
             <LogOut size={18} />
             <span className="text-sm font-medium">Keluar</span>
