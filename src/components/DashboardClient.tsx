@@ -22,7 +22,7 @@ interface DashboardClientProps {
   initialAccounts: Account[]
 }
 
-type View = 'DASHBOARD' | 'ACCOUNTS' | 'SAMPLES' | 'ANALYTICS' | 'SETTINGS'
+type View = 'DASHBOARD' | 'ACCOUNTS' | 'SAMPLES' | 'ANALYTICS' | 'SETTINGS' | 'SIMS'
 
 export default function DashboardClient({ initialUser, initialAccounts }: DashboardClientProps) {
   const router = useRouter()
@@ -206,6 +206,39 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
             </div>
           </div>
         )
+      case 'SIMS':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-white uppercase tracking-tighter">SIM Asset Control</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {accounts.map(acc => {
+                const { status, color, alert } = getSimStatus(acc.sim_expiry)
+                return (
+                  <div key={acc.id + '-sim'} className="glass p-6 rounded-3xl border border-white/5 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`p-2 rounded-xl bg-current/10 ${color}`}>
+                          <Smartphone size={20} />
+                        </div>
+                        <div className={`px-2 py-1 rounded-lg text-[9px] font-black border border-current/20 ${color} bg-current/5 uppercase`}>
+                          {status}
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-white text-lg mb-1">{acc.wa_number || 'No Number'}</h4>
+                      <p className="text-xs text-slate-500 mb-4">Linked to: <span className="text-rose-900/80 font-bold">{acc.nickname}</span></p>
+                    </div>
+                    <div className="pt-4 border-t border-white/5">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-slate-500 font-bold">Expiry Date</span>
+                        <span className={`font-mono ${alert ? color : 'text-slate-400'}`}>{acc.sim_expiry || 'NOT SET'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
       default:
         return null
     }
@@ -223,7 +256,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         <nav className="flex-1 space-y-1">
           <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard Control" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
           <NavItem icon={<Users size={18} />} label="Shopee Accounts" active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
-          <NavItem icon={<Smartphone size={18} />} label="SIM Intelligence" onClick={() => setActiveView('ACCOUNTS')} />
+          <NavItem icon={<Smartphone size={18} />} label="SIM Intelligence" active={activeView === 'SIMS'} onClick={() => setActiveView('SIMS')} />
           <NavItem icon={<Package size={18} />} label="Sampel & Logistik" active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
           <NavItem icon={<TrendingUp size={18} />} label="Analitik Komisi" active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
         </nav>
