@@ -11,19 +11,27 @@ export const pushService = {
       if (!subscription) {
         const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
         if (!vapidPublicKey) {
-          console.warn('VAPID Public Key missing. Push registration skipped.')
+          console.error('CRITICAL: VAPID Public Key (NEXT_PUBLIC_VAPID_PUBLIC_KEY) is missing in environment variables.')
+          alert('Pengaturan gagal: VAPID Public Key belum dikonfigurasi.')
           return
         }
 
+        console.log('Requesting new push subscription with VAPID key...')
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: vapidPublicKey
         })
       }
       
+      console.log('Successfully subscribed to push:', subscription)
       return subscription
-    } catch (err) {
+    } catch (err: any) {
       console.error('Push Service Registration Error:', err)
+      if (err.name === 'NotAllowedError') {
+        alert('Izin notifikasi ditolak oleh browser. Silakan aktifkan di pengaturan browser Anda.')
+      } else {
+        alert('Gagal mendaftarkan push notification: ' + err.message)
+      }
     }
   },
 

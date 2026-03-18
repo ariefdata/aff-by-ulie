@@ -19,3 +19,25 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// Push Notification Listener
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {};
+  const title = data.title ?? 'Srikandi Elite notification';
+  const options = {
+    body: data.body ?? 'Update baru tersedia.',
+    icon: '/logo.png',
+    badge: '/logo.png',
+    data: data.url
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification Click Listener
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  if (event.notification.data) {
+    event.waitUntil(self.clients.openWindow(event.notification.data));
+  }
+});
