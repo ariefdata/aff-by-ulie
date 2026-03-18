@@ -10,9 +10,15 @@ export const pushService = {
       
       if (!subscription) {
         const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        console.log('Push Service Debug:', { 
+          hasVapid: !!vapidPublicKey, 
+          env: process.env.NODE_ENV,
+          keyPrefix: vapidPublicKey?.substring(0, 5) + '...' 
+        })
+
         if (!vapidPublicKey) {
-          console.error('CRITICAL: VAPID Public Key (NEXT_PUBLIC_VAPID_PUBLIC_KEY) is missing in environment variables.')
-          alert('Pengaturan gagal: VAPID Public Key belum dikonfigurasi.')
+          console.error('CRITICAL: NEXT_PUBLIC_VAPID_PUBLIC_KEY is undefined on client side.')
+          alert('Pengaturan gagal: NEXT_PUBLIC_VAPID_PUBLIC_KEY tidak ditemukan di browser. Pastikan nama variabel di Vercel diawali dengan "NEXT_PUBLIC_" agar bisa dibaca oleh React/Frontend.')
           return
         }
 
