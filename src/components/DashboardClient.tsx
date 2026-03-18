@@ -1,7 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { LayoutDashboard, Users, Smartphone, Package, TrendingUp, Settings, LogOut, Search, Plus, Copy, Check, ExternalLink, ChevronRight, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { 
+  LayoutDashboard, Users, Smartphone, Package, 
+  TrendingUp, Settings, LogOut, Plus, Copy, 
+  Check, AlertTriangle, X, Search, ExternalLink, ChevronRight
+} from 'lucide-react'
 import Image from 'next/image'
 import { Account, accountService } from '@/services/accountService'
 import { getSimStatus } from '@/utils/simLogic'
