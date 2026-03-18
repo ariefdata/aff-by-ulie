@@ -422,8 +422,18 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard label="Total Akun" value={accounts.length.toString()} sub="Verified" />
             <StatCard label="SIM Alert" value={accounts.filter(a => getSimStatus(a.sim_expiry).alert).length.toString()} sub="Action Needed" color="text-orange-400" />
-            <StatCard label="Sampel" value="0" sub="Pending" color="text-amber-400" />
-            <StatCard label="Income" value="Rp 0" sub="Weekly Est" color="text-green-400" />
+            <StatCard 
+              label="Sampel" 
+              value={accounts.reduce((sum, a) => sum + (a.samples_count || 0), 0).toString()} 
+              sub="Total Assets" 
+              color="text-amber-400" 
+            />
+            <StatCard 
+              label="Income" 
+              value={`Rp ${accounts.reduce((sum, a) => sum + (a.income_total || 0), 0).toLocaleString()}`} 
+              sub="Verified Commission" 
+              color="text-green-400" 
+            />
           </div>
         )}
 
