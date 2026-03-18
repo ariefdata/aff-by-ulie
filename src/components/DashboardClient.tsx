@@ -112,7 +112,6 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     email_addr: '',
     email_pass: '',
     wa_number: '',
-    wa_number: '',
     sim_expiry: '',
   })
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false)
@@ -195,7 +194,17 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                   </motion.div>
                 ) : (
                   accounts.slice(0, 4).map(acc => (
-                    <AccountCard key={acc.id} account={acc} onCopy={handleCopy} copiedId={copiedId} />
+                    <AccountCard
+                      key={acc.id}
+                      account={acc}
+                      onCopy={handleCopy}
+                      copiedId={copiedId}
+                      onDelete={handleDeleteAccount}
+                      onLog={(id, name) => {
+                        setActivityTarget({ id, name })
+                        setIsActivityModalOpen(true)
+                      }}
+                    />
                   ))
                 )}
               </div>
@@ -559,6 +568,68 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                   SAVE ASSET TO SYSTEM
                 </button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {/* Activity Log Modal */}
+        {isActivityModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsActivityModalOpen(false)} />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-slate-900 border border-white/10 w-full max-w-sm rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden"
+            >
+               <div className="p-8 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                 <div>
+                   <h2 className="text-xl font-bold text-white tracking-tight">Catat Aktivitas</h2>
+                   <p className="text-[10px] text-accent font-black uppercase tracking-[0.2em] mt-1">{activityTarget?.name}</p>
+                 </div>
+                 <button onClick={() => setIsActivityModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400"><X size={20} /></button>
+               </div>
+               <form onSubmit={handleLogActivity} className="p-8 space-y-6">
+                 <div className="grid grid-cols-2 gap-3 pb-2">
+                   <button 
+                    type="button"
+                    onClick={() => setActivityData({...activityData, type: 'SAMPLE'})}
+                    className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${activityData.type === 'SAMPLE' ? 'bg-accent text-primary border-accent' : 'bg-white/5 text-slate-500 border-white/10'}`}
+                   >
+                     Minta Sampel
+                   </button>
+                   <button 
+                    type="button"
+                    onClick={() => setActivityData({...activityData, type: 'INCOME'})}
+                    className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${activityData.type === 'INCOME' ? 'bg-green-600 text-white border-green-600 shadow-[0_0_20px_rgba(22,163,74,0.3)]' : 'bg-white/5 text-slate-500 border-white/10'}`}
+                   >
+                     Input Komisi
+                   </button>
+                 </div>
+
+                 <div className="space-y-4">
+                  <FormInput 
+                    label={activityData.type === 'SAMPLE' ? "Jumlah Barang (Pcs)" : "Jumlah Uang (Rp)"} 
+                    type="number" 
+                    value={activityData.amount.toString()} 
+                    onChange={(v) => setActivityData({...activityData, amount: parseFloat(v) || 0})}
+                    required 
+                  />
+                  
+                  <FormInput 
+                    label="Catatan Singkat" 
+                    value={activityData.notes} 
+                    onChange={(v) => setActivityData({...activityData, notes: v})}
+                    placeholder="e.g. Campaign Ramadan 2024" 
+                  />
+                 </div>
+
+                 <button type="submit" className="w-full py-5 rounded-[1.5rem] bg-white text-slate-950 text-xs font-black uppercase tracking-[0.3em] shadow-xl active:scale-95 transition-all mt-4">
+                   SIMPAN LOG
+                 </button>
+               </form>
             </motion.div>
           </div>
         )}
