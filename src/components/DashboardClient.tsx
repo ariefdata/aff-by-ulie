@@ -66,26 +66,13 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const handleAddAccount = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const added = await accountService.createAccount(newAcc as Omit<Account, 'id'>)
-      setAccounts([added, ...accounts])
-      setIsAddModalOpen(false)
-      setNewAcc({ nickname: '', device_name: '', shopee_user: '', shopee_pass: '', email_addr: '', email_pass: '', wa_number: '', sim_expiry: '', samples_count: 0, income_total: 0 })
-    } catch (error) {
-      console.error('Failed to add account', error)
-      alert('Gagal menambah akun. Pastikan koneksi Supabase benar.')
-    }
-  }
-
   const handleDeleteAccount = async (id: string) => {
-    if (!confirm('Anda yakin ingin menghapus aset ini dari sistem?')) return
+    if (!confirm('Hapus akun ini akan menghapus seluruh data terkait (Identitas, SIM, dll). Lanjut?')) return
     try {
       await accountService.deleteAccount(id)
       setAccounts(accounts.filter(a => a.id !== id))
     } catch (error) {
-      alert('Gagal menghapus data.')
+      alert('Gagal menghapus akun.')
     }
   }
 
