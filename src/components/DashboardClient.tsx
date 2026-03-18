@@ -392,9 +392,9 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
       {/* Main Content */}
       <main className="flex-1 md:ml-64 p-4 md:p-8 pb-32 md:pb-8">
-        <header className="flex items-center justify-between mb-8">
+        <header className="flex items-center justify-between mb-8 sticky top-0 py-4 z-30 md:static md:p-0 bg-slate-950/50 backdrop-blur-xl -mx-4 px-4 md:bg-transparent md:backdrop-blur-none">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">{activeView === 'DASHBOARD' ? 'Elite Control Panel' : activeView}</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-white mb-1 tracking-tight">{activeView === 'DASHBOARD' ? 'Elite Control Panel' : activeView}</h1>
             <p className="text-slate-700 text-[8px] uppercase font-black tracking-[0.5em]">Dedicated to Shen Won-won</p>
           </div>
           <div className="flex items-center gap-2">
