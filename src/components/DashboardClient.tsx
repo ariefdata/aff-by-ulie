@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Smartphone, Package, 
   TrendingUp, Settings, LogOut, Plus, Copy, 
   Check, AlertTriangle, X, Search, ExternalLink, ChevronRight,
-  FileText, Target, CreditCard
+  FileText, Target, CreditCard, Trash2, Edit
 } from 'lucide-react'
 import Image from 'next/image'
 import { Account, accountService } from '@/services/accountService'
@@ -112,8 +112,12 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     email_addr: '',
     email_pass: '',
     wa_number: '',
+    wa_number: '',
     sim_expiry: '',
   })
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false)
+  const [activityTarget, setActivityTarget] = useState<{id: string, name: string} | null>(null)
+  const [activityData, setActivityData] = useState({ type: 'SAMPLE' as 'SAMPLE' | 'INCOME', amount: 0, notes: '' })
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
@@ -127,10 +131,41 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       const added = await accountService.createAccount(newAcc as Omit<Account, 'id'>)
       setAccounts([added, ...accounts])
       setIsAddModalOpen(false)
-      setNewAcc({ nickname: '', device_name: '', shopee_user: '', shopee_pass: '', email_addr: '', email_pass: '', wa_number: '', sim_expiry: '' })
+      setNewAcc({ nickname: '', device_name: '', shopee_user: '', shopee_pass: '', email_addr: '', email_pass: '', wa_number: '', sim_expiry: '', samples_count: 0, income_total: 0 })
     } catch (error) {
       console.error('Failed to add account', error)
       alert('Gagal menambah akun. Pastikan koneksi Supabase benar.')
+    }
+  }
+
+  const handleDeleteAccount = async (id: string) => {
+    if (!confirm('Anda yakin ingin menghapus aset ini dari sistem?')) return
+    try {
+      await accountService.deleteAccount(id)
+      setAccounts(accounts.filter(a => a.id !== id))
+    } catch (error) {
+      alert('Gagal menghapus data.')
+    }
+  }
+
+  const handleLogActivity = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activityTarget) return
+    try {
+      await accountService.logActivity({
+        account_id: activityTarget.id,
+        type: activityData.type,
+        amount: activityData.amount,
+        notes: activityData.notes
+      })
+      // Refresh accounts to show new totals
+      const updated = await accountService.getAccounts()
+      setAccounts(updated)
+      setIsActivityModalOpen(false)
+      setActivityData({ type: 'SAMPLE', amount: 0, notes: '' })
+      alert('Aktivitas berhasil dicatat!')
+    } catch (error) {
+      alert('Gagal mencatat aktivitas.')
     }
   }
 
@@ -176,11 +211,21 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-white">Manajemen Akun Shopee</h3>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {accounts.map(acc => (
-                <AccountCard key={acc.id} account={acc} onCopy={handleCopy} copiedId={copiedId} />
-              ))}
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {accounts.map(account => (
+                  <AccountCard 
+                    key={account.id} 
+                    account={account} 
+                    onCopy={handleCopy} 
+                    copiedId={copiedId}
+                    onDelete={handleDeleteAccount}
+                    onLog={(id, name) => {
+                      setActivityTarget({ id, name })
+                      setIsActivityModalOpen(true)
+                    }}
+                  />
+                ))}
+              </div>
           </div>
         )
       case 'SAMPLES':
@@ -539,7 +584,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   )
 }
 
-function AccountCard({ account, onCopy, copiedId }: { account: Account, onCopy: (t: string, id: string) => void, copiedId: string | null }) {
+function AccountCard({ account, onCopy, copiedId, onDelete, onLog }: { account: Account, onCopy: (t: string, id: string) => void, copiedId: string | null, onDelete: (id: string) => void, onLog: (id: string, name: string) => void }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const { status, color } = getSimStatus(account.sim_expiry)
   
@@ -557,8 +602,16 @@ function AccountCard({ account, onCopy, copiedId }: { account: Account, onCopy: 
              <Smartphone size={10} /> {account.device_name || 'N/A'}
           </p>
         </div>
-        <div className={`px-2 py-1 rounded-lg text-[10px] font-bold border border-current/20 ${color} bg-current/5 uppercase tracking-tighter`}>
-          SIM: {status}
+        <div className="flex flex-col items-end gap-2">
+          <div className={`px-2 py-1 rounded-lg text-[10px] font-bold border border-current/20 ${color} bg-current/5 uppercase tracking-tighter`}>
+            SIM: {status}
+          </div>
+          <button 
+            onClick={() => onDelete(account.id)}
+            className="p-1.5 text-slate-700 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 
@@ -585,8 +638,21 @@ function AccountCard({ account, onCopy, copiedId }: { account: Account, onCopy: 
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden border-t border-white/5 pt-4 mt-4 space-y-4"
           >
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                onClick={() => onLog(account.id, account.nickname)}
+                className="flex items-center justify-center gap-2 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-slate-300 hover:bg-white/10 transition-all"
+              >
+                <Plus size={12} /> Catat Log
+              </button>
+              <button className="flex items-center justify-center gap-2 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-slate-300 opacity-30 cursor-not-allowed">
+                <Edit size={12} /> Edit Data
+              </button>
+            </div>
+
             {/* SIM & WhatsApp */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
               <DetailRow icon={<Smartphone size={12} />} label="WA Pusat" val={account.wa_number} />
               <DetailRow icon={<AlertTriangle size={12} />} label="Masa Aktif" val={account.sim_expiry} />
             </div>
@@ -605,8 +671,8 @@ function AccountCard({ account, onCopy, copiedId }: { account: Account, onCopy: 
 
             {/* Performance */}
             <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
-              <DetailRow icon={<Package size={12} />} label="Sampel" val={account.samples_count?.toString()} />
-              <DetailRow icon={<TrendingUp size={12} />} label="Komisi" val={account.income_total ? `Rp ${account.income_total.toLocaleString()}` : '0'} />
+              <DetailRow icon={<Package size={12} />} label="Total Sampel" val={account.samples_count?.toString() || '0'} />
+              <DetailRow icon={<TrendingUp size={12} />} label="Total Komisi" val={account.income_total ? `Rp ${account.income_total.toLocaleString()}` : '0'} />
             </div>
           </motion.div>
         )}

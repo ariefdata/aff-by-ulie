@@ -19,8 +19,8 @@ export default function FinancialCharts() {
           <TrendingUp size={20} className="text-accent" />
           Income Performance
         </h3>
-        <div className="flex items-center gap-1 text-green-400 font-bold bg-green-400/10 px-3 py-1 rounded-full text-xs">
-           <TrendingUp size={14} /> +12.5%
+        <div className="flex items-center gap-1 text-slate-500 font-bold bg-white/5 px-3 py-1 rounded-full text-xs underline decoration-dotted">
+           <TrendingUp size={14} /> 0%
         </div>
       </div>
 
