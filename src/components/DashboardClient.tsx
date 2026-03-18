@@ -393,16 +393,24 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       {/* Main Content */}
       <main className="flex-1 md:ml-64 p-4 md:p-8 pb-32 md:pb-8">
         <header className="flex items-center justify-between mb-8">
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">{activeView === 'DASHBOARD' ? 'Elite Control Panel' : activeView}</h1>
             <p className="text-slate-700 text-[8px] uppercase font-black tracking-[0.5em]">Dedicated to Shen Won-won</p>
           </div>
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="w-12 h-12 rounded-2xl bg-accent text-primary flex items-center justify-center shadow-lg active:scale-[0.98] transition-all accent-glow"
-          >
-            <Plus size={24} strokeWidth={3} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setActiveView('SETTINGS')}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${activeView === 'SETTINGS' ? 'bg-rose-900/20 text-rose-400' : 'bg-white/5 text-slate-400'}`}
+            >
+              <Settings size={20} />
+            </button>
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="w-10 h-10 rounded-xl bg-accent text-primary flex items-center justify-center shadow-lg active:scale-[0.98] transition-all accent-glow"
+            >
+              <Plus size={20} strokeWidth={3} />
+            </button>
+          </div>
         </header>
 
         {/* Quick Stats Overlay (Only on main dashboard) */}
@@ -475,20 +483,20 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       </AnimatePresence>
 
       {/* Mobile Nav - Bottom */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-around items-center z-40">
-         <MobileNavItem icon={<LayoutDashboard size={20} />} active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
-         <MobileNavItem icon={<Users size={20} />} active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
-         <div className="w-10" /> {/* Spacer for FAB */}
-         <MobileNavItem icon={<Package size={20} />} active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
-         <MobileNavItem icon={<TrendingUp size={20} />} active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-2 flex justify-between items-center z-40 bg-slate-950/80 backdrop-blur-xl">
+         <MobileNavItem icon={<LayoutDashboard size={20} />} label="Dash" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
+         <MobileNavItem icon={<Users size={20} />} label="Accounts" active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
+         <MobileNavItem icon={<Smartphone size={20} />} label="SIM" active={activeView === 'SIMS'} onClick={() => setActiveView('SIMS')} />
+         <MobileNavItem icon={<Package size={20} />} label="Samples" active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
+         <MobileNavItem icon={<TrendingUp size={20} />} label="Stats" active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
       </nav>
 
-      {/* Floating Add Button for Mobile */}
+      {/* Floating Add Button for Mobile (Bottom Right) */}
       <button 
         onClick={() => setIsAddModalOpen(true)}
-        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-14 h-14 bg-accent rounded-full flex items-center justify-center shadow-2xl z-50 accent-glow active:scale-90 transition-transform"
+        className="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-accent text-primary rounded-full flex items-center justify-center shadow-2xl z-50 accent-glow active:scale-90 transition-transform ring-4 ring-slate-950/50"
       >
-        <Plus className="text-primary w-8 h-8" strokeWidth={3} />
+        <Plus size={28} strokeWidth={3} />
       </button>
     </div>
   )
@@ -573,16 +581,11 @@ function NavItem({ icon, label, active = false, onClick }: NavItemProps) {
   )
 }
 
-interface MobileNavItemProps {
-  icon: React.ReactNode
-  active?: boolean
-  onClick?: () => void
-}
-
-function MobileNavItem({ icon, active = false, onClick }: MobileNavItemProps) {
+function MobileNavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
   return (
-    <button onClick={onClick} className={`p-2 transition-all ${active ? 'text-accent' : 'text-slate-500 hover:text-white'}`}>
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 flex-1 py-1 transition-all ${active ? 'text-accent' : 'text-slate-600'}`}>
       {icon}
+      <span className="text-[9px] font-bold uppercase tracking-tighter">{label}</span>
     </button>
   )
 }
