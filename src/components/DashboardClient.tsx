@@ -196,7 +196,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       <aside className="hidden md:flex w-64 flex-col glass border-r border-white/10 p-6 fixed h-full z-20">
         <div className="flex items-center gap-3 mb-12">
           <Image src="/logo.png" alt="Logo" width={40} height={40} className="accent-glow rounded-xl" />
-          <h2 className="text-xl font-bold text-white tracking-tighter uppercase">Srikandi <span className="text-rose-500">Elite</span></h2>
+          <h2 className="text-xl font-bold text-white tracking-widest uppercase">Srikandi <span className="text-rose-900/80">Elite</span></h2>
         </div>
 
         <nav className="flex-1 space-y-1">
@@ -207,18 +207,18 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
           <NavItem icon={<TrendingUp size={18} />} label="Analitik Komisi" active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-white/10 space-y-1">
+        <div className="mt-auto pt-6 border-t border-white/5 space-y-1">
           <NavItem icon={<Settings size={18} />} label="Pengaturan" active={activeView === 'SETTINGS'} onClick={() => setActiveView('SETTINGS')} />
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all group"
+            className="flex items-center gap-3 w-full px-4 py-3 text-slate-500 hover:text-rose-400 hover:bg-rose-900/10 rounded-xl transition-all group"
           >
             <LogOut size={18} />
             <span className="text-sm font-medium">Keluar</span>
           </button>
           
           <div className="mt-4 px-4">
-            <p className="text-[9px] text-rose-400/40 uppercase font-black tracking-[0.3em] leading-relaxed">
+            <p className="text-[8px] text-slate-800 uppercase font-black tracking-[0.4em] leading-relaxed group-hover:text-rose-900/40 transition-colors">
               Dedicated to<br/>Shen Won-won
             </p>
           </div>
@@ -230,7 +230,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         <header className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">{activeView === 'DASHBOARD' ? 'Elite Control Panel' : activeView}</h1>
-            <p className="text-rose-400/60 text-[10px] uppercase font-bold tracking-widest">Dedicated to Shen Won-won</p>
+            <p className="text-slate-700 text-[8px] uppercase font-black tracking-[0.5em]">Dedicated to Shen Won-won</p>
           </div>
           <button 
             onClick={() => setIsAddModalOpen(true)}

@@ -33,37 +33,37 @@ export default function LoginPage() {
           <div className="w-24 h-24 mb-6 relative animate-float">
              <Image 
                 src="/logo.png" 
-                alt="Aff by Ulie Logo" 
+                alt="Srikandi Elite Logo" 
                 fill 
-                className="object-contain drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]"
+                className="object-contain drop-shadow-[0_10px_15px_rgba(157,23,77,0.2)]"
              />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-            Aff <span className="text-rose-500">by Ulie</span>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-2 uppercase">
+            Srikandi <span className="text-rose-800">Elite</span>
           </h1>
-          <p className="text-slate-400 text-center text-sm font-medium">
-            Srikandi Elite Management System
+          <p className="text-slate-500 text-center text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">
+            Professional Affiliate Management
           </p>
         </div>
 
         <div className="space-y-6 relative z-10">
           <div className="space-y-4">
-            <FeatureItem icon={<Lock className="w-4 h-4 text-rose-400"/>} text="Secured Account Vault" />
-            <FeatureItem icon={<Smartphone className="w-4 h-4 text-rose-400"/>} text="SIM Lifecycle Intelligence" />
-            <FeatureItem icon={<Mail className="w-4 h-4 text-rose-400"/>} text="Professional Logistics Tracker" />
+            <FeatureItem icon={<Lock className="w-4 h-4 text-rose-900/60"/>} text="Secured Account Vault" />
+            <FeatureItem icon={<Smartphone className="w-4 h-4 text-rose-900/60"/>} text="SIM Lifecycle Intelligence" />
+            <FeatureItem icon={<Mail className="w-4 h-4 text-rose-900/60"/>} text="Professional Logistics Tracker" />
           </div>
 
           <button
             onClick={handleLogin}
-            className="w-full py-4 px-6 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-3 active:scale-95 group overflow-hidden relative"
+            className="w-full py-4 px-6 bg-rose-900 hover:bg-rose-800 text-rose-100 font-bold rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-3 active:scale-95 group overflow-hidden relative border border-white/5"
           >
-            <span className="relative z-10">MASUK KE DASHBOARD</span>
-            <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <span className="relative z-10">AKSES DASHBOARD ELITE</span>
+            <div className="absolute inset-0 bg-white/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
           </button>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-white/10 text-center relative z-10">
-          <p className="text-[10px] text-rose-400/60 uppercase tracking-[0.2em] font-bold">
+        <div className="mt-8 pt-6 border-t border-white/5 text-center relative z-10">
+          <p className="text-[9px] text-slate-600 uppercase tracking-[0.3em] font-black">
             Dedicated to Shen Won-won
           </p>
         </div>
