@@ -529,6 +529,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 }
 
 function AccountCard({ account, onCopy, copiedId }: { account: Account, onCopy: (t: string, id: string) => void, copiedId: string | null }) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const { status, color } = getSimStatus(account.sim_expiry)
   
   return (
@@ -536,7 +537,7 @@ function AccountCard({ account, onCopy, copiedId }: { account: Account, onCopy: 
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass p-5 rounded-3xl border border-white/5 hover:border-accent/30 transition-all group"
+      className="glass p-5 rounded-3xl border border-white/5 hover:border-accent/30 transition-all group relative overflow-hidden"
     >
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -564,12 +565,63 @@ function AccountCard({ account, onCopy, copiedId }: { account: Account, onCopy: 
           isCopied={copiedId === account.id + '-e'}
         />
       </div>
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden border-t border-white/5 pt-4 mt-4 space-y-4"
+          >
+            {/* SIM & WhatsApp */}
+            <div className="grid grid-cols-2 gap-4">
+              <DetailRow icon={<Smartphone size={12} />} label="WA Pusat" val={account.wa_number} />
+              <DetailRow icon={<AlertTriangle size={12} />} label="Masa Aktif" val={account.sim_expiry} />
+            </div>
+
+            {/* KYC Details */}
+            <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
+              <DetailRow icon={<Users size={12} />} label="Nama KTP" val={account.ktp_name} />
+              <DetailRow icon={<FileText size={12} />} label="No. NPWP" val={account.npwp_num} />
+            </div>
+
+            {/* Bank Details */}
+            <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
+              <DetailRow icon={<Target size={12} />} label="Bank" val={account.bank_name} />
+              <DetailRow icon={<CreditCard size={12} />} label="Rekening" val={account.bank_acc} />
+            </div>
+
+            {/* Performance */}
+            <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
+              <DetailRow icon={<Package size={12} />} label="Sampel" val={account.samples_count?.toString()} />
+              <DetailRow icon={<TrendingUp size={12} />} label="Komisi" val={account.income_total ? `Rp ${account.income_total.toLocaleString()}` : '0'} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      <div className="flex items-center justify-between text-[10px] text-slate-500 pt-3 border-t border-white/5">
+      <div className="flex items-center justify-between text-[10px] text-slate-500 pt-3 border-t border-white/5 mt-4">
         <span className="flex items-center gap-1"><AlertTriangle size={10} className="text-slate-600" /> SIM Exp: {account.sim_expiry || 'N/A'}</span>
-        <span className="cursor-pointer hover:text-white transition-colors underline decoration-dotted text-[9px] uppercase tracking-widest font-bold">Detail Akun</span>
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-accent hover:text-white transition-colors underline decoration-dotted text-[9px] uppercase tracking-widest font-bold"
+        >
+          {isExpanded ? 'Sembunyikan' : 'Detail Lengkap'}
+        </button>
       </div>
     </motion.div>
+  )
+}
+
+function DetailRow({ icon, label, val }: { icon: React.ReactNode, label: string, val?: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-[8px] uppercase tracking-[0.2em] text-slate-600 flex items-center gap-1">
+        {icon} {label}
+      </p>
+      <p className="text-[11px] text-slate-300 font-medium truncate">{val || '-'}</p>
+    </div>
   )
 }
 
