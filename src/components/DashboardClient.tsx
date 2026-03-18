@@ -1,11 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  LayoutDashboard, Users, Smartphone, Package, 
-  TrendingUp, Settings, LogOut, Plus, Copy, 
-  Check, AlertTriangle, X
-} from 'lucide-react'
+import { LayoutDashboard, Users, Smartphone, Package, TrendingUp, Settings, LogOut, Search, Plus, Copy, Check, ExternalLink, ChevronRight, X } from 'lucide-react'
 import Image from 'next/image'
 import { Account, accountService } from '@/services/accountService'
 import { getSimStatus } from '@/utils/simLogic'
@@ -38,9 +34,20 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   const [activeView, setActiveView] = useState<View>('DASHBOARD')
   
   const [isPushEnabled, setIsPushEnabled] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showInstallBanner, setShowInstallBanner] = useState(false)
   
   useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setShowInstallBanner(true)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    
     const checkPush = async () => {
+      // ... (rest of useEffect logic)
       const sub = await pushService.getSubscription()
       setIsPushEnabled(!!sub)
     }
@@ -66,7 +73,19 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     }
   }
   
+  const handleInstall = async () => {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt')
+    }
+    setDeferredPrompt(null)
+    setShowInstallBanner(false)
+  }
+
   // Form State
+  // ... (rest of code)
   const [newAcc, setNewAcc] = useState<Partial<Account>>({
     nickname: '',
     device_name: '',
@@ -247,6 +266,49 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   return (
     <div className="flex min-h-screen">
       {/* Sidebar - Desktop */}
+      {/* PWA Install Banner */}
+      <AnimatePresence>
+        {showInstallBanner && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-24 md:bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-80 z-[60]"
+          >
+            <div className="glass p-6 rounded-3xl border border-rose-900/30 shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-900/10 to-transparent pointer-events-none" />
+              <button 
+                onClick={() => setShowInstallBanner(false)}
+                className="absolute top-4 right-4 text-slate-500 hover:text-white"
+              >
+                <X size={16} />
+              </button>
+              
+              <div className="flex gap-4 items-center mb-4">
+                <div className="w-12 h-12 relative rounded-2xl overflow-hidden shadow-lg border border-white/10">
+                  <Image src="/logo.png" alt="Srikandi Elite" fill className="object-cover" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Srikandi Elite App</h4>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Native Experience</p>
+                </div>
+              </div>
+              
+              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                Pasang aplikasi di layar utama Anda untuk akses lebih cepat dan notifikasi real-time.
+              </p>
+              
+              <button 
+                onClick={handleInstall}
+                className="w-full py-3 bg-rose-900 hover:bg-rose-800 text-rose-100 text-xs font-black rounded-xl transition-all uppercase tracking-widest border border-white/5 active:scale-95"
+              >
+                Instal Sekarang
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <aside className="hidden md:flex w-64 flex-col glass border-r border-white/10 p-6 fixed h-full z-20">
         <div className="flex items-center gap-3 mb-12">
           <Image src="/logo.png" alt="Logo" width={40} height={40} className="accent-glow rounded-xl" />
