@@ -5,13 +5,13 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Aff by Ulie | Command Center",
-  description: "Management Skala Besar & Kemandirian Tinggi untuk Shopee Affiliate.",
+  title: "Srikandi Elite | Management Control",
+  description: "Elite Affiliate Management System - Dedicated to Shen Won-won.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Aff by Ulie",
+    statusBarStyle: "black-translucent",
+    title: "Srikandi Elite",
   },
   formatDetection: {
     telephone: false,
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#020617",
+  themeColor: "#0c0c0e",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

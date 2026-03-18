@@ -1,24 +1,30 @@
 {
-  "name": "Aff by Ulie",
-  "short_name": "AffbyUlie",
-  "description": "Shopee Affiliate Control Center - Management Skala Besar",
+  "name": "Srikandi Elite",
+  "short_name": "Srikandi",
+  "description": "Elite Affiliate Management System - Dedicated to Shen Won-won",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#020617",
+  "background_color": "#0c0c0e",
+  "theme_color": "#0c0c0e",
   "orientation": "portrait",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

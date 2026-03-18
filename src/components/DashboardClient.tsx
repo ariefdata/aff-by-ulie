@@ -373,6 +373,15 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         {renderContent()}
       </main>
 
+      {/* Mobile Bottom Nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-between items-center z-50">
+        <MobileNavItem icon={<LayoutDashboard size={22} />} active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
+        <MobileNavItem icon={<Users size={22} />} active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
+        <MobileNavItem icon={<Smartphone size={22} />} active={activeView === 'SIMS'} onClick={() => setActiveView('SIMS')} />
+        <MobileNavItem icon={<Package size={22} />} active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
+        <MobileNavItem icon={<Settings size={22} />} active={activeView === 'SETTINGS'} onClick={() => setActiveView('SETTINGS')} />
+      </nav>
+
       {/* Add Account Modal */}
       <AnimatePresence>
         {isAddModalOpen && (
