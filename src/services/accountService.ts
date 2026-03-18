@@ -20,6 +20,16 @@ export interface Account {
   income_total: number
 }
 
+export interface Activity {
+  id: string
+  user_id: string
+  account_id: string
+  type: 'SAMPLE' | 'INCOME'
+  amount: number
+  notes?: string
+  logged_at: string
+}
+
 export const accountService = {
   async getAccounts() {
     const supabase = createClient()
@@ -65,5 +75,40 @@ export const accountService = {
       .eq('id', id)
     
     if (error) throw error
+  },
+
+  // Activity Methods
+  async getActivities(accountId?: string) {
+    const supabase = createClient()
+    let query = supabase.from('activities').select('*').order('logged_at', { ascending: false })
+    if (accountId) query = query.eq('account_id', accountId)
+    
+    const { data, error } = await query
+    if (error) throw error
+    return data as Activity[]
+  },
+
+  async logActivity(activity: Omit<Activity, 'id' | 'user_id' | 'logged_at'>) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    const { data, error } = await supabase
+      .from('activities')
+      .insert([{ ...activity, user_id: user?.id }])
+      .select()
+    
+    if (error) throw error
+    
+    // Also update account totals (incremental)
+    const { data: account } = await supabase.from('accounts').select('samples_count, income_total').eq('id', activity.account_id).single()
+    if (account) {
+      const updates: any = {}
+      if (activity.type === 'SAMPLE') updates.samples_count = (account.samples_count || 0) + activity.amount
+      if (activity.type === 'INCOME') updates.income_total = (account.income_total || 0) + activity.amount
+      
+      await supabase.from('accounts').update(updates).eq('id', activity.account_id)
+    }
+
+    return data[0]
   }
 }
