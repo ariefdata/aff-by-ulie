@@ -59,195 +59,286 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<View>('DASHBOARD')
+  const [isPushEnabled, setIsPushEnabled] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showInstallBanner, setShowInstallBanner] = useState(false)
+
+  // Sync Global Data
+  useEffect(() => {
+    const sync = async () => {
+      try {
+        const [ids, sm, sp, cm] = await Promise.all([
+          accountService.getIdentities(),
+          accountService.getSims(),
+          accountService.getSamples(),
+          accountService.getCommissions()
+        ])
+        setIdentities(ids)
+        setSims(sm)
+        setSamples(sp)
+        setCommissions(cm)
+      } catch (e) { console.error('Sync failed', e) }
+      setLoading(false)
+    }
+    sync()
+    
+    // PWA Check
+    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault(); setDeferredPrompt(e); setShowInstallBanner(true)
+    })
+  }, [])
+
+  // CRUD Actions
+  const handleCreateAcc = async () => {
+    const added = await accountService.createAccount(newAcc)
+    setAccounts([added, ...accounts])
+    setIsAccModalOpen(false)
+    setNewAcc({ username: '', email: '', password: '' })
+  }
+
+  const handleCreateComm = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const added = await accountService.createCommission(newComm)
+    setCommissions([added, ...commissions])
+    setIsCommModalOpen(false)
+    setNewComm({ account_id: '', start_date: '', end_date: '', amount: 0 })
+    alert('Komisi Berhasil Dicatat!')
+  }
+
+  const handleCreateSim = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const added = await accountService.createSim(newSim)
+    setSims([added, ...sims])
+    setIsSimModalOpen(false)
+    setNewSim({ account_id: '', phone_number: '', expiry_date: '', has_whatsapp: false })
+  }
+
+  const handleCreateId = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const added = await accountService.createIdentity(newId)
+    setIdentities([added, ...identities])
+    setIsIdModalOpen(false)
+    setNewId({ account_id: '', nik: '', name_ktp: '', npwp: '', bank_name: '', bank_acc: '', address: '' })
+  }
+
+  const handleCreateSample = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const added = await accountService.createSample(newSample)
+    setSamples([added, ...samples])
+    setIsSampleModalOpen(false)
+    setNewSample({ account_id: '', product_name: '', shop_name: '', brand_name: '' })
+  }
+
+  const handlePushToggle = async () => {
+    if (isPushEnabled) {
+      await pushService.unsubscribe(); setIsPushEnabled(false)
+    } else {
+      const sub = await pushService.register(); if (sub) setIsPushEnabled(true)
+    }
+  }
 
   const handleCopy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedId(id)
+    navigator.clipboard.writeText(text); setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const handleDeleteAccount = async (id: string) => {
-    if (!confirm('Hapus akun ini akan menghapus seluruh data terkait (Identitas, SIM, dll). Lanjut?')) return
-    try {
-      await accountService.deleteAccount(id)
-      setAccounts(accounts.filter(a => a.id !== id))
-    } catch (error) {
-      alert('Gagal menghapus akun.')
-    }
-  }
-
-  const handleLogActivity = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!activityTarget) return
-    try {
-      await accountService.logActivity({
-        account_id: activityTarget.id,
-        type: activityData.type,
-        amount: activityData.amount,
-        notes: activityData.notes
-      })
-      // Refresh accounts to show new totals
-      const updated = await accountService.getAccounts()
-      setAccounts(updated)
-      setIsActivityModalOpen(false)
-      setActivityData({ type: 'SAMPLE', amount: 0, notes: '' })
-      alert('Aktivitas berhasil dicatat!')
-    } catch (error) {
-      alert('Gagal mencatat aktivitas.')
-    }
-  }
-
   const renderContent = () => {
+    if (loading) return (
+      <div className="flex flex-col items-center justify-center p-20 animate-pulse">
+        <div className="w-12 h-12 rounded-full border-4 border-accent border-t-transparent animate-spin mb-4" />
+        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Menyinkronkan Data Relasional...</p>
+      </div>
+    )
+
     switch (activeView) {
       case 'DASHBOARD':
         return (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+               <StatCard 
+                label="Total Komisi" 
+                value={`Rp ${commissions.reduce((acc, c) => acc + (Number(c.amount) || 0), 0).toLocaleString()}`} 
+                sub="Life-time" 
+                color="text-green-400" 
+               />
+               <StatCard 
+                label="Total Sampel" 
+                value={samples.length.toString()} 
+                sub="Logistik" 
+                color="text-amber-400" 
+               />
+               <StatCard 
+                label="Akun Aktif" 
+                value={accounts.length.toString()} 
+                sub="Shopee Asset" 
+                color="text-rose-400" 
+               />
+               <StatCard 
+                label="SIM Warning" 
+                value={sims.filter(s => getSimStatus(s.expiry_date).alert).length.toString()} 
+                sub="Attention Req" 
+                color="text-red-400" 
+               />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <FinancialCharts />
-              <SampleTracker />
+              <FinancialCharts commissions={commissions} />
+              <SampleTracker samples={samples} />
             </div>
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Users size={20} className="text-accent" />
-                Daftar Akun Master
-              </h3>
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {accounts.length === 0 ? (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.6 }}
-                    className="col-span-full glass rounded-3xl p-20 flex flex-col items-center justify-center text-center w-full"
-                  >
-                    <Users className="w-16 h-16 text-slate-600 mb-6" />
-                    <p className="text-slate-400 max-w-xs">Belum ada akun terdaftar dalam sistem.</p>
-                  </motion.div>
-                ) : (
-                  accounts.slice(0, 4).map(acc => (
-                    <AccountCard
-                      key={acc.id}
-                      account={acc}
-                      onCopy={handleCopy}
-                      copiedId={copiedId}
-                      onDelete={handleDeleteAccount}
-                      onLog={(id, name) => {
-                        setActivityTarget({ id, name })
-                        setIsActivityModalOpen(true)
-                      }}
-                    />
-                  ))
-                )}
+
+            {/* Recent Accounts Grid */}
+            <section className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-bold text-white uppercase tracking-tight flex items-center gap-2">
+                  <TrendingUp size={20} className="text-accent" /> Recent Assets
+                </h3>
+                <button onClick={() => setActiveView('ACCOUNTS')} className="text-xs font-black text-accent uppercase tracking-widest hover:brightness-125 transition-all">Lihat Semua</button>
               </div>
-              {accounts.length > 4 && (
-                <button onClick={() => setActiveView('ACCOUNTS')} className="text-accent text-sm font-medium hover:underline">
-                  Lihat Semua Akun ({accounts.length})
-                </button>
-              )}
-            </div>
-          </div>
-        )
-      case 'ACCOUNTS':
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white">Manajemen Akun Shopee</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {accounts.map(account => (
-                  <AccountCard 
-                    key={account.id} 
-                    account={account} 
-                    onCopy={handleCopy} 
-                    copiedId={copiedId}
-                    onDelete={handleDeleteAccount}
-                    onLog={(id, name) => {
-                      setActivityTarget({ id, name })
-                      setIsActivityModalOpen(true)
-                    }}
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {accounts.slice(0, 4).map(acc => (
+                  <AccountSimpleCard key={acc.id} account={acc} onCopy={handleCopy} copiedId={copiedId} />
                 ))}
               </div>
+            </section>
           </div>
         )
-      case 'SAMPLES':
-        return <div className="max-w-4xl mx-auto"><SampleTracker /></div>
-      case 'ANALYTICS':
-        return <div className="max-w-4xl mx-auto"><FinancialCharts /></div>
-      case 'SETTINGS':
+
+      case 'ACCOUNTS':
         return (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="glass p-8 rounded-3xl border border-white/5">
-               <h3 className="text-xl font-bold text-white mb-6">Profil Pengguna</h3>
-               <div className="flex items-center gap-4 mb-8">
-                  <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center text-2xl font-bold text-primary">
-                    {initialUser.email?.[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-lg">{initialUser.email?.split('@')[0]}</p>
-                    <p className="text-slate-500 text-sm">{initialUser.email}</p>
-                  </div>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-[2rem] border border-white/5">
+               <div>
+                  <h3 className="text-xl font-bold text-white">Daftar Akun Shopee</h3>
+                  <p className="text-xs text-slate-500">Kelola kredensial dan aset utama Anda.</p>
                </div>
-               
-               <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-                    <div>
-                      <p className="text-sm font-bold text-white">Push Notifications</p>
-                      <p className="text-[10px] text-slate-500 italic opacity-60">Alert SIM & Deadline Sampel</p>
-                    </div>
-                    <div 
-                      onClick={handlePushToggle}
-                      className={`w-12 h-6 rounded-full relative cursor-pointer transition-all duration-300 ${isPushEnabled ? 'bg-rose-900' : 'bg-slate-800'}`}
-                    >
-                       <motion.div 
-                        animate={{ x: isPushEnabled ? 24 : 0 }}
-                        className={`absolute left-1 top-1 w-4 h-4 rounded-full shadow-lg ${isPushEnabled ? 'bg-rose-400' : 'bg-slate-600'}`} 
-                       />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 opacity-50 cursor-not-allowed">
-                    <div>
-                      <p className="text-sm font-bold text-white">Telegram Bot Integration</p>
-                      <p className="text-[10px] text-slate-500">Coming Soon</p>
-                    </div>
-                    <div className="w-12 h-6 bg-slate-800 rounded-full relative">
-                       <div className="absolute left-1 top-1 w-4 h-4 bg-slate-600 rounded-full" />
-                    </div>
-                  </div>
-               </div>
-            </div>
-            
-            <div className="glass p-8 rounded-3xl border border-white/5 bg-rose-500/5 border-rose-500/10">
-               <h3 className="text-sm font-bold text-rose-400 mb-4 uppercase tracking-widest">Zone Bahaya</h3>
-               <p className="text-xs text-slate-500 mb-6">Keluar dari sesi ini akan menghapus akses cepat hingga Anda login kembali.</p>
-               <button 
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-500 rounded-xl text-sm font-bold hover:bg-rose-500/20 transition-all"
-               >
-                  <LogOut size={16} /> Keluar Sekarang
+               <button onClick={() => setIsAccModalOpen(true)} className="p-4 bg-accent rounded-2xl text-primary shadow-xl hover:scale-105 active:scale-95 transition-all">
+                  <Plus size={24} />
                </button>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {accounts.map(acc => (
+                <AccountSimpleCard 
+                  key={acc.id} 
+                  account={acc} 
+                  onCopy={handleCopy} 
+                  copiedId={copiedId}
+                  onDelete={async (id) => {
+                    if (confirm('Hapus akun ini?')) {
+                      await accountService.deleteAccount(id);
+                      setAccounts(accounts.filter(a => a.id !== id))
+                    }
+                  }}
+                />
+              ))}
+            </div>
           </div>
         )
+
       case 'SIMS':
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white uppercase tracking-tighter">SIM Asset Control</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {accounts.map(acc => {
-                const { status, color, alert } = getSimStatus(acc.sim_expiry)
-                return (
-                  <div key={acc.id + '-sim'} className="glass p-6 rounded-3xl border border-white/5 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-4">
-                        <div className={`p-2 rounded-xl bg-current/10 ${color}`}>
-                          <Smartphone size={20} />
-                        </div>
-                        <div className={`px-2 py-1 rounded-lg text-[9px] font-black border border-current/20 ${color} bg-current/5 uppercase`}>
-                          {status}
-                        </div>
-                      </div>
-                      <h4 className="font-bold text-white text-lg mb-1">{acc.wa_number || 'No Number'}</h4>
-                      <p className="text-xs text-slate-500 mb-4">Linked to: <span className="text-rose-900/80 font-bold">{acc.nickname}</span></p>
-                    </div>
-                    <div className="pt-4 border-t border-white/5">
+        return renderSimsView()
+      case 'IDENTITY':
+        return renderIdentityView()
+      case 'SAMPLES':
+        return renderSamplesView()
+      case 'ANALYTICS':
+        return <div className="max-w-6xl mx-auto space-y-8"><FinancialCharts commissions={commissions} fullView /></div>
+      case 'SETTINGS':
+        return renderSettingsView()
+      default:
+        return null
+    }
+  }
+
+  // Sub-View Renderers
+  const renderSimsView = () => (
+    <div className="space-y-6">
+       <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-[2rem] border border-white/5">
+          <h3 className="text-xl font-bold text-white">SIM Lifecycle</h3>
+          <button onClick={() => setIsSimModalOpen(true)} className="px-6 py-3 bg-rose-500 rounded-2xl text-white text-xs font-black uppercase tracking-widest">+ SIM Baru</button>
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {sims.map(sim => (
+             <EntityCard 
+                key={sim.id} 
+                title={sim.phone_number} 
+                sub={accounts.find(a => a.id === sim.account_id)?.username || 'Orphan'} 
+                status={getSimStatus(sim.expiry_date)} 
+                onDelete={() => accountService.deleteSim(sim.id).then(() => setSims(sims.filter(s => s.id !== sim.id)))}
+             />
+          ))}
+       </div>
+    </div>
+  )
+
+  const renderIdentityView = () => (
+    <div className="space-y-6">
+       <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-[2rem] border border-white/5">
+          <h3 className="text-xl font-bold text-white">Identity Profiles (KYC)</h3>
+          <button onClick={() => setIsIdModalOpen(true)} className="px-6 py-3 bg-blue-600 rounded-2xl text-white text-xs font-black uppercase tracking-widest">+ Identitas Baru</button>
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {identities.map(id => (
+             <EntityCard 
+                key={id.id} 
+                title={id.name_ktp} 
+                sub={id.nik} 
+                extra={accounts.find(a => a.id === id.account_id)?.username}
+                onDelete={() => accountService.deleteIdentity(id.id).then(() => setIdentities(identities.filter(i => i.id !== id.id)))}
+             />
+          ))}
+       </div>
+    </div>
+  )
+
+  const renderSamplesView = () => (
+    <div className="space-y-6">
+       <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-[2rem] border border-white/5">
+          <h3 className="text-xl font-bold text-white">Supply & Logistics</h3>
+          <button onClick={() => setIsSampleModalOpen(true)} className="px-6 py-3 bg-amber-500 rounded-2xl text-white text-xs font-black uppercase tracking-widest">+ Request Sampel</button>
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {samples.map(s => (
+             <EntityCard 
+                key={s.id} 
+                title={s.product_name} 
+                sub={s.brand_name} 
+                extra={s.shop_name}
+                onDelete={() => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id)))}
+             />
+          ))}
+       </div>
+    </div>
+  )
+
+  const renderSettingsView = () => (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="glass p-8 rounded-[2.5rem] border border-white/5">
+          <h3 className="text-xl font-bold text-white mb-6">User Config</h3>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center text-2xl font-bold text-primary">
+              {initialUser.email?.[0].toUpperCase()}
+            </div>
+            <div>
+              <p className="text-white font-bold text-lg">{initialUser.email?.split('@')[0]}</p>
+              <p className="text-slate-500 text-sm">{initialUser.email}</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+            <div>
+              <p className="text-sm font-bold text-white">Push Notifications</p>
+              <p className="text-[10px] text-slate-500 italic opacity-60">Alert SIM & Deadline Sampel</p>
+            </div>
+            <div onClick={handlePushToggle} className={`w-12 h-6 rounded-full relative cursor-pointer transition-all duration-300 ${isPushEnabled ? 'bg-rose-900' : 'bg-slate-800'}`}>
+                <motion.div animate={{ x: isPushEnabled ? 24 : 0 }} className={`absolute left-1 top-1 w-4 h-4 rounded-full shadow-lg ${isPushEnabled ? 'bg-rose-400' : 'bg-slate-600'}`} />
+            </div>
+          </div>
+      </div>
+      <button onClick={handleLogout} className="w-full py-5 bg-rose-500/10 text-rose-500 rounded-3xl text-sm font-black uppercase tracking-[0.2em] border border-rose-500/20 active:scale-95 transition-all">Sign Out System</button>
+    </div>
+  )
                       <div className="flex justify-between items-center text-[10px]">
                         <span className="text-slate-500 font-bold">Expiry Date</span>
                         <span className={`font-mono ${alert ? color : 'text-slate-400'}`}>{acc.sim_expiry || 'NOT SET'}</span>
