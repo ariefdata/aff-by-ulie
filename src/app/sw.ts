@@ -21,7 +21,7 @@ const serwist = new Serwist({
 serwist.addEventListeners();
 
 // Push Notification Listener
-self.addEventListener('push', (event) => {
+self.addEventListener('push', (event: any) => {
   const data = event.data?.json() ?? {};
   const title = data.title ?? 'Srikandi Elite notification';
   const options = {
@@ -31,13 +31,13 @@ self.addEventListener('push', (event) => {
     data: data.url
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil((self as any).registration.showNotification(title, options));
 });
 
 // Notification Click Listener
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', (event: any) => {
   event.notification.close();
   if (event.notification.data) {
-    event.waitUntil(self.clients.openWindow(event.notification.data));
+    event.waitUntil((self as any).clients.openWindow(event.notification.data));
   }
 });
