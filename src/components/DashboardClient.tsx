@@ -270,7 +270,32 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   return (
     <div className="flex min-h-screen">
       {/* Sidebar - Desktop */}
-      {/* PWA Install Banner */}
+      {/* Top Manual Install Banner (Mobile Only) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 px-4 pt-4 pointer-events-none">
+        <motion.div 
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="glass p-3 rounded-2xl border border-rose-900/20 shadow-xl flex items-center justify-between pointer-events-auto"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-white/10">
+              <Image src="/logo.png" alt="Srikandi" fill className="object-cover" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-white leading-tight">Srikandi Elite</p>
+              <p className="text-[8px] text-slate-500 uppercase tracking-widest">App Mode</p>
+            </div>
+          </div>
+          <button 
+            onClick={deferredPrompt ? handleInstall : () => alert('Buka menu browser ( ⋮ ) lalu klik "Install App" atau "Tambahkan ke Layar Utama".')}
+            className="px-4 py-2 bg-rose-900 text-rose-100 text-[10px] font-black rounded-lg uppercase tracking-widest border border-white/5"
+          >
+            {deferredPrompt ? 'Instal App' : 'Cara Pasang'}
+          </button>
+        </motion.div>
+      </div>
+
+      {/* PWA Install Banner (Bottom Popup) */}
       <AnimatePresence>
         {showInstallBanner && (
           <motion.div 
