@@ -475,15 +475,21 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       </AnimatePresence>
 
       {/* Mobile Nav - Bottom */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-between items-center z-40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-around items-center z-40">
          <MobileNavItem icon={<LayoutDashboard size={20} />} active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
          <MobileNavItem icon={<Users size={20} />} active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
-         <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center -mt-8 shadow-lg accent-glow">
-            <Plus className="text-primary w-6 h-6" onClick={() => setIsAddModalOpen(true)} />
-         </div>
+         <div className="w-10" /> {/* Spacer for FAB */}
          <MobileNavItem icon={<Package size={20} />} active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
          <MobileNavItem icon={<TrendingUp size={20} />} active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
       </nav>
+
+      {/* Floating Add Button for Mobile */}
+      <button 
+        onClick={() => setIsAddModalOpen(true)}
+        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-14 h-14 bg-accent rounded-full flex items-center justify-center shadow-2xl z-50 accent-glow active:scale-90 transition-transform"
+      >
+        <Plus className="text-primary w-8 h-8" strokeWidth={3} />
+      </button>
     </div>
   )
 }
