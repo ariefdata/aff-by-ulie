@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation'
 import { pushService } from '@/services/pushService'
 import SampleTracker from './SampleTracker'
 import FinancialCharts from './FinancialCharts'
-import { useEffect } from 'react'
+// useEffect is already imported above
 
 interface DashboardClientProps {
   initialUser: any
