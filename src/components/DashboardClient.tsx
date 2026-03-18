@@ -8,7 +8,10 @@ import {
   FileText, Target, CreditCard, Trash2, Edit
 } from 'lucide-react'
 import Image from 'next/image'
-import { Account, accountService } from '@/services/accountService'
+import { 
+  ShopeeAccount, Identity, Sim, Sample, Commission, 
+  accountService 
+} from '@/services/accountService'
 import { getSimStatus } from '@/utils/simLogic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
@@ -20,103 +23,42 @@ import FinancialCharts from './FinancialCharts'
 
 interface DashboardClientProps {
   initialUser: any
-  initialAccounts: Account[]
+  initialAccounts: ShopeeAccount[]
 }
 
-type View = 'DASHBOARD' | 'ACCOUNTS' | 'SAMPLES' | 'ANALYTICS' | 'SETTINGS' | 'SIMS'
+type View = 'DASHBOARD' | 'ACCOUNTS' | 'SAMPLES' | 'ANALYTICS' | 'SETTINGS' | 'SIMS' | 'IDENTITY'
 
 export default function DashboardClient({ initialUser, initialAccounts }: DashboardClientProps) {
   const router = useRouter()
   const supabase = createClient()
-  const [accounts, setAccounts] = useState<Account[]>(initialAccounts)
+  
+  // Master Datasets
+  const [accounts, setAccounts] = useState<ShopeeAccount[]>(initialAccounts)
+  const [identities, setIdentities] = useState<Identity[]>([])
+  const [sims, setSims] = useState<Sim[]>([])
+  const [samples, setSamples] = useState<Sample[]>([])
+  const [commissions, setCommissions] = useState<Commission[]>([])
+  const [loading, setLoading] = useState(true)
   
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  // Form States (Modular)
+  const [isAccModalOpen, setIsAccModalOpen] = useState(false)
+  const [isSimModalOpen, setIsSimModalOpen] = useState(false)
+  const [isIdModalOpen, setIsIdModalOpen] = useState(false)
+  const [isSampleModalOpen, setIsSampleModalOpen] = useState(false)
+  const [isCommModalOpen, setIsCommModalOpen] = useState(false)
+  
+  const [newAcc, setNewAcc] = useState({ username: '', email: '', password: '' })
+  const [newComm, setNewComm] = useState({ account_id: '', start_date: '', end_date: '', amount: 0 })
+  const [newSim, setNewSim] = useState({ account_id: '', phone_number: '', expiry_date: '', has_whatsapp: false })
+  const [newId, setNewId] = useState({ account_id: '', nik: '', name_ktp: '', npwp: '', bank_name: '', bank_acc: '', address: '' })
+  const [newSample, setNewSample] = useState({ account_id: '', product_name: '', shop_name: '', brand_name: '' })
+
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<View>('DASHBOARD')
-  
-  const [isPushEnabled, setIsPushEnabled] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
-  const [showInstallBanner, setShowInstallBanner] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(false)
-  const [isBannerDismissed, setIsBannerDismissed] = useState(false)
-  
-  useEffect(() => {
-    // Check if running as standalone
-    const checkStandalone = () => {
-      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
-      setIsStandalone(!!isStandaloneMode)
-    }
-    
-    checkStandalone()
-    
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-      setShowInstallBanner(true)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    
-    const checkPush = async () => {
-      // ... (rest of useEffect logic)
-      const sub = await pushService.getSubscription()
-      setIsPushEnabled(!!sub)
-    }
-    checkPush()
-    
-    // Check for SIM Alerts
-    const alertedAccounts = accounts.filter(a => getSimStatus(a.sim_expiry).alert)
-    if (alertedAccounts.length > 0) {
-      pushService.sendLocalNotification(
-        '⚠️ SIM Lifecycle Alert',
-        `${alertedAccounts.length} akun memerlukan perhatian (Masa Tenggang/Expired).`
-      )
-    }
-  }, [accounts])
-
-  const handlePushToggle = async () => {
-    if (isPushEnabled) {
-      const success = await pushService.unsubscribe()
-      if (success) setIsPushEnabled(false)
-    } else {
-      const sub = await pushService.register()
-      if (sub) setIsPushEnabled(true)
-    }
-  }
-  
-  const handleInstall = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt')
-    }
-    setDeferredPrompt(null)
-    setShowInstallBanner(false)
-  }
-
-  // Form State
-  // ... (rest of code)
-  const [newAcc, setNewAcc] = useState<Partial<Account>>({
-    sim_status: 'ACTIVE',
-    samples_count: 0,
-    income_total: 0,
-    nickname: '',
-    device_name: '',
-    shopee_user: '',
-    shopee_pass: '',
-    email_addr: '',
-    email_pass: '',
-    wa_number: '',
-    sim_expiry: '',
-  })
-  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false)
-  const [activityTarget, setActivityTarget] = useState<{id: string, name: string} | null>(null)
-  const [activityData, setActivityData] = useState({ type: 'SAMPLE' as 'SAMPLE' | 'INCOME', amount: 0, notes: '' })
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
