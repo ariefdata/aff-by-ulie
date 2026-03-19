@@ -8,13 +8,15 @@ import {
 } from 'recharts'
 import { 
   TrendingUp, Calendar, Filter, ChevronDown, 
-  PieChart as PieIcon, History, Store, Edit, Trash2, AlertCircle
+  PieChart as PieIcon, History, Store, Edit, Trash2, AlertCircle,
+  Copy, Check
 } from 'lucide-react'
-import { Commission, ShopeeAccount } from '@/services/accountService'
+import { Commission, ShopeeAccount, ShopeeAffiliateAccount } from '@/services/accountService'
 
 interface FinancialChartsProps {
   commissions: Commission[]
   accounts?: ShopeeAccount[]
+  affiliateAccounts?: ShopeeAffiliateAccount[]
   fullView?: boolean
   onEditCommission?: (c: Commission) => void
   onDeleteCommission?: (c: Commission) => void
@@ -48,7 +50,7 @@ export default function FinancialCharts(props: FinancialChartsProps) {
   }
 }
 
-function FinancialChartsInner({ commissions, accounts = [], fullView = false, onEditCommission, onDeleteCommission }: FinancialChartsProps) {
+function FinancialChartsInner({ commissions, accounts = [], affiliateAccounts = [], fullView = false, onEditCommission, onDeleteCommission }: FinancialChartsProps) {
   const [range, setRange] = useState<Range>('30d')
   const [customRange, setCustomRange] = useState({ start: '', end: '' })
 
@@ -102,11 +104,15 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
   const pieData = useMemo(() => {
     const groups: { [key: string]: number } = {}
     filteredCommissions.forEach(c => {
-      const acc = accounts.find(a => a.id === c.account_id)?.username || 'Other'
-      groups[acc] = (groups[acc] || 0) + (Number(c.amount) || 0)
+      let label = 'Other'
+      if (affiliateAccounts && c.affiliate_id) {
+        const aff = affiliateAccounts.find(a => a.id === c.affiliate_id)
+        if (aff) label = aff.email
+      }
+      groups[label] = (groups[label] || 0) + (Number(c.amount) || 0)
     })
     return Object.entries(groups).map(([name, value]) => ({ name, value }))
-  }, [filteredCommissions, accounts])
+  }, [filteredCommissions, affiliateAccounts])
 
   const total = filteredCommissions.reduce((sum, c) => sum + (Number(c.amount) || 0), 0)
 
@@ -258,10 +264,10 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
                          {new Date(c.date).toLocaleDateString()}
                        </td>
                        <td className="p-4">
-                         <div className="flex items-center gap-2">
-                            <Store size={12} className="text-slate-600" />
-                            <span className="font-bold text-white">{accounts.find(a => a.id === c.account_id)?.username || 'Unknown'}</span>
-                         </div>
+                         <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">{affiliateAccounts.find(a => a.id === c.affiliate_id)?.email || 'Unknown'}</span>
+                    <CopyButton text={c.affiliate_id} />
+                  </div>
                        </td>
                        <td className="p-4 font-bold text-rose-500">
                          Rp {(Number(c.amount)||0).toLocaleString()}
@@ -302,5 +308,19 @@ function StatItem({ label, value, color }: { label: string, value: string, color
       <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{label}</p>
       <p className={`text-lg font-bold tracking-tighter truncate ${color}`}>{value}</p>
     </div>
+  )
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button onClick={handleCopy} className="p-1 hover:bg-white/10 rounded transition-colors text-slate-500 hover:text-accent">
+      {copied ? <Check size={10} /> : <Copy size={10} />}
+    </button>
   )
 }

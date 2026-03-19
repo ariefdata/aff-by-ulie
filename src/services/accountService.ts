@@ -3,9 +3,9 @@ import { createClient } from '@/utils/supabase/client'
 export interface ShopeeAccount {
   id: string
   user_id: string
+  username: string
   email: string
   password?: string
-  username?: string // Keep for backward compatibility if needed, but we'll use email
   created_at: string
 }
 
@@ -56,7 +56,7 @@ export interface Sim {
 export interface Sample {
   id: string
   user_id: string
-  account_id: string
+  affiliate_id: string
   product_name: string
   shop_name: string
   brand_name: string
@@ -66,7 +66,7 @@ export interface Sample {
 export interface Commission {
   id: string
   user_id: string
-  account_id: string
+  affiliate_id: string
   date: string
   amount: number
   created_at: string
@@ -104,8 +104,8 @@ const _updateEntity = async <T>(table: string, id: string, payload: any): Promis
 // Service Methods
 export const accountService = {
   getAccounts: () => _getEntities<ShopeeAccount>('accounts'),
-  createAccount: (data: { email: string, password?: string }) => _createEntity<ShopeeAccount>('accounts', data),
-  updateAccount: (id: string, data: { email?: string, password?: string }) => _updateEntity<ShopeeAccount>('accounts', id, data),
+  createAccount: (data: { email: string, username: string, password?: string }) => _createEntity<ShopeeAccount>('accounts', data),
+  updateAccount: (id: string, data: { email?: string, username?: string, password?: string }) => _updateEntity<ShopeeAccount>('accounts', id, data),
   deleteAccount: (id: string) => _deleteEntity('accounts', id),
 
   // Affiliate
@@ -131,15 +131,15 @@ export const accountService = {
   deleteSim: (id: string) => _deleteEntity('sims', id),
   updateSim: (id: string, data: Partial<Sim>) => _updateEntity<Sim>('sims', id, data),
 
-  getSamples: () => _getEntities<Sample>('samples'),
-  createSample: (data: Omit<Sample, 'id' | 'user_id' | 'created_at'>) => _createEntity<Sample>('samples', data),
-  deleteSample: (id: string) => _deleteEntity('samples', id),
-  updateSample: (id: string, data: Partial<Sample>) => _updateEntity<Sample>('samples', id, data),
-
   getCommissions: () => _getEntities<Commission>('commissions'),
-  createCommission: (data: Omit<Commission, 'id' | 'user_id' | 'created_at'>) => _createEntity<Commission>('commissions', data),
+  createCommission: (data: { affiliate_id: string, date: string, amount: number }) => _createEntity<Commission>('commissions', data),
+  updateCommission: (id: string, data: { affiliate_id?: string, date?: string, amount?: number }) => _updateEntity<Commission>('commissions', id, data),
   deleteCommission: (id: string) => _deleteEntity('commissions', id),
-  updateCommission: (id: string, data: Partial<Commission>) => _updateEntity<Commission>('commissions', id, data),
+
+  getSamples: () => _getEntities<Sample>('samples'),
+  createSample: (data: { affiliate_id: string, product_name: string, shop_name: string, brand_name: string }) => _createEntity<Sample>('samples', data),
+  updateSample: (id: string, data: { affiliate_id?: string, product_name?: string, shop_name?: string, brand_name?: string }) => _updateEntity<Sample>('samples', id, data),
+  deleteSample: (id: string) => _deleteEntity('samples', id),
 
   // File Upload
   uploadDocument: async (file: File): Promise<string> => {
