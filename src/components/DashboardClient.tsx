@@ -40,6 +40,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   const [activeView, setActiveView] = useState<View>('DASHBOARD')
   const [isPushEnabled, setIsPushEnabled] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
 
   // Modals Visibility
   const [modals, setModals] = useState({
@@ -73,7 +74,19 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     }
     fetchData()
     pushService.getSubscription().then(sub => setIsPushEnabled(!!sub))
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+    })
   }, [])
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') setDeferredPrompt(null)
+  }
 
   // Handlers
   const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login') }
@@ -126,7 +139,21 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
              <StatCard label="Active SIMs" value={sims.length.toString()} sub="Management" />
              <StatCard label="Identity KYC" value={identities.length.toString()} sub="Profiles" />
           </div>
-          <div className="grid lg:grid-cols-3 gap-8">
+
+          {deferredPrompt && (
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass p-6 rounded-[2rem] border border-accent/20 flex flex-col md:flex-row items-center justify-between gap-4 bg-accent/5">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-accent/20 rounded-2xl text-accent"><Smartphone size={24} /></div>
+                  <div>
+                    <h4 className="text-white font-bold">Instal Aplikasi Ulie</h4>
+                    <p className="text-xs text-slate-500">Akses lebih cepat & mudah dari layar utama HP Anda.</p>
+                  </div>
+                </div>
+                <button onClick={handleInstall} className="w-full md:w-auto px-8 py-3 bg-accent text-primary font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">Instal Sekarang</button>
+             </motion.div>
+           )}
+
+           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2"><FinancialCharts commissions={commissions} accounts={accounts} onEditCommission={(c: Commission) => { setEditingEntity({type:'comm', id: c.id}); setNewComm({account_id: c.account_id, date: c.date, amount: Number(c.amount)}); setModals({...modals, comm: true}) }} /></div>
             <div><SampleTracker samples={samples} /></div>
           </div>
