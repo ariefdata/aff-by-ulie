@@ -127,7 +127,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
              <StatCard label="Identity KYC" value={identities.length.toString()} sub="Profiles" />
           </div>
           <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2"><FinancialCharts commissions={commissions} accounts={accounts} /></div>
+            <div className="lg:col-span-2"><FinancialCharts commissions={commissions} accounts={accounts} onEditCommission={((c: Commission) => { setEditingEntity({type:'comm', id: c.id}); setNewComm({account_id: c.account_id, start_date: c.start_date, end_date: c.end_date, amount: Number(c.amount)}); setModals({...modals, comm: true}) }) as any} /></div>
             <div><SampleTracker samples={samples} /></div>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
           </div>
         )
       }
-      case 'ANALYTICS': return <div className="max-w-6xl mx-auto"><FinancialCharts commissions={commissions} accounts={accounts} fullView /></div>
+      case 'ANALYTICS': return <div className="max-w-6xl mx-auto"><FinancialCharts commissions={commissions} accounts={accounts} fullView onEditCommission={((c: Commission) => { setEditingEntity({type:'comm', id: c.id}); setNewComm({account_id: c.account_id, start_date: c.start_date, end_date: c.end_date, amount: Number(c.amount)}); setModals({...modals, comm: true}) }) as any} /></div>
       case 'SETTINGS': return <SettingsView user={initialUser} onLogout={handleLogout} onPushToggle={() => {}} isPushEnabled={isPushEnabled} />
       default: return null
     }
