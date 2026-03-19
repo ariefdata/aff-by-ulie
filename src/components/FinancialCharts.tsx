@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, ReactNode } from 'react'
 import { 
   XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer,
@@ -8,7 +8,7 @@ import {
 } from 'recharts'
 import { 
   TrendingUp, Calendar, Filter, ChevronDown, 
-  PieChart as PieIcon, History, Store, Edit, Trash2
+  PieChart as PieIcon, History, Store, Edit, Trash2, AlertCircle
 } from 'lucide-react'
 import { Commission, ShopeeAccount } from '@/services/accountService'
 
@@ -27,17 +27,33 @@ const COLORS = [
 
 type Range = '1d' | '3d' | '7d' | '30d' | '90d' | '182d' | '365d' | 'custom'
 
-export default function FinancialCharts({ commissions, accounts = [], fullView = false, onEditCommission, onDeleteCommission }: FinancialChartsProps) {
+export default function FinancialCharts(props: FinancialChartsProps) {
   const [mounted, setMounted] = useState(false)
-  const [range, setRange] = useState<Range>('7d')
-  const [customRange, setCustomRange] = useState({ start: '', end: '' })
-  const [showRangeMenu, setShowRangeMenu] = useState(false)
-
   useEffect(() => { setMounted(true) }, [])
 
-  // Filtering Logic
+  if (!mounted) return <div className="h-96 glass rounded-[2.5rem] animate-pulse" />
+
+  try {
+    return <FinancialChartsInner {...props} />
+  } catch (err) {
+    console.error('Analytics Runtime Crash:', err)
+    return (
+      <div className="glass rounded-[2.5rem] p-10 border border-rose-500/20 text-center space-y-4">
+        <AlertCircle size={40} className="text-rose-500 mx-auto" />
+        <h3 className="text-white font-bold">Grafik bermasalah</h3>
+        <p className="text-slate-500 text-xs px-10">Terdapat kesalahan saat memproses data analitik. Silakan muat ulang halaman atau hubungi pengembang.</p>
+        <button onClick={() => window.location.reload()} className="px-6 py-2 bg-white/5 text-white rounded-xl border border-white/10 text-[10px] font-black uppercase">Muat Ulang</button>
+      </div>
+    )
+  }
+}
+
+function FinancialChartsInner({ commissions, accounts = [], fullView = false, onEditCommission, onDeleteCommission }: FinancialChartsProps) {
+  const [range, setRange] = useState<Range>('7d')
+  const [customRange, setCustomRange] = useState({ start: '', end: '' })
+
+  // Filtering Logic with total safety
   const filteredCommissions = useMemo(() => {
-    if (!mounted) return []
     const now = new Date()
     return commissions.filter(c => {
       if (!c.start_date) return false
@@ -48,41 +64,46 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
         if (!customRange.start || !customRange.end) return true
         const start = new Date(customRange.start)
         const end = new Date(customRange.end)
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) return true
         return cDate >= start && cDate <= end
       }
       
       const diffDays = (now.getTime() - cDate.getTime()) / (1000 * 3600 * 24)
-      const limit = {
-        '1d': 1, '3d': 3, '7d': 7, '30d': 30, '90d': 90, '182d': 182, '365d': 365
-      }[range as Exclude<Range, 'custom'>] || 7
+      const limitKey = range.replace('d', '')
+      const limit = parseInt(limitKey) || 7
       
-      return diffDays <= limit
+      return diffDays <= (range === '182d' ? 182 : range === '365d' ? 365 : limit)
     }).sort((a, b) => {
       const ta = new Date(a.start_date).getTime()
       const tb = new Date(b.start_date).getTime()
       return (isNaN(ta) ? 0 : ta) - (isNaN(tb) ? 0 : tb)
     })
-  }, [commissions, range, customRange, mounted])
+  }, [commissions, range, customRange])
 
   // Chart Data: Multi-line Timeline (using BarChart for stability)
   const timelineData = useMemo(() => {
-    if (!mounted) return []
     const groups: { [key: string]: any } = {}
     filteredCommissions.forEach(c => {
-      const d = new Date(c.start_date)
-      const dateKey = `${d.getDate()}/${d.getMonth() + 1}`
-      const accName = accounts.find(a => a.id === c.account_id)?.username || 'Other'
-      
-      if (!groups[dateKey]) groups[dateKey] = { name: dateKey }
-      groups[dateKey][accName] = (groups[dateKey][accName] || 0) + Number(c.amount)
+      try {
+        const d = new Date(c.start_date)
+        if (isNaN(d.getTime())) return
+        const dateKey = `${d.getDate()}/${d.getMonth() + 1}`
+        const accName = accounts.find(a => a.id === c.account_id)?.username || 'Other'
+        
+        if (!groups[dateKey]) groups[dateKey] = { name: dateKey }
+        groups[dateKey][accName] = (groups[dateKey][accName] || 0) + (Number(c.amount) || 0)
+      } catch (e) {
+        console.warn('Skipping invalid entry', c)
+      }
     })
     return Object.values(groups)
-  }, [filteredCommissions, accounts, mounted])
+  }, [filteredCommissions, accounts])
 
   const uniqueAccNames = useMemo(() => {
     const names = new Set<string>()
     filteredCommissions.forEach(c => {
-      names.add(accounts.find(a => a.id === c.account_id)?.username || 'Other')
+      const acc = accounts.find(a => a.id === c.account_id)
+      names.add(acc?.username || 'Other')
     })
     return Array.from(names)
   }, [filteredCommissions, accounts])
@@ -92,14 +113,27 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
     const groups: { [key: string]: number } = {}
     filteredCommissions.forEach(c => {
       const acc = accounts.find(a => a.id === c.account_id)?.username || 'Other'
-      groups[acc] = (groups[acc] || 0) + Number(c.amount)
+      groups[acc] = (groups[acc] || 0) + (Number(c.amount) || 0)
     })
     return Object.entries(groups).map(([name, value]) => ({ name, value }))
   }, [filteredCommissions, accounts])
 
   const total = filteredCommissions.reduce((sum, c) => sum + (Number(c.amount) || 0), 0)
 
-  if (!mounted) return <div className="h-96 glass rounded-[2.5rem] animate-pulse" />
+  // Robust Days Calculation
+  const daysOfRange = useMemo(() => {
+    if (range === 'custom') {
+      if (!customRange.start || !customRange.end) return 7
+      const start = new Date(customRange.start)
+      const end = new Date(customRange.end)
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 7
+      return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)))
+    }
+    const val = parseInt(range)
+    return isNaN(val) ? 7 : (range === '182d' ? 182 : range === '365d' ? 365 : val)
+  }, [range, customRange])
+
+  const avgPerDay = daysOfRange > 0 ? Math.round(total / daysOfRange) : 0
 
   return (
     <div className={`glass rounded-[2.5rem] p-6 md:p-8 border border-white/5 h-full transition-all space-y-10 ${fullView ? 'max-w-6xl mx-auto' : ''}`}>
@@ -110,7 +144,7 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
             <TrendingUp size={24} className="text-accent" />
             Performance
           </h3>
-          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black underline decoration-accent/30 underline-offset-4">Stable Bar Matrix V1</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black underline decoration-accent/30 underline-offset-4">Stable Hardened V2.1</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -156,7 +190,7 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#0f172a', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }}
                   cursor={{fill: 'rgba(255,255,255,0.02)'}}
-                  formatter={(v: any) => `Rp ${Number(v).toLocaleString()}`}
+                  formatter={(v: any) => `Rp ${(Number(v)||0).toLocaleString()}`}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', paddingTop: '10px' }} />
                 {uniqueAccNames.map((name, i) => (
@@ -175,7 +209,7 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
         </div>
 
         {/* Pie Distribution */}
-        <div className="h-[350px] flex flex-col glass p-6 rounded-[2rem] border border-white/5">
+        <div className="h-[300px] md:h-[350px] flex flex-col glass p-6 rounded-[2rem] border border-white/5 w-full">
           <h4 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
             <PieIcon size={14} /> Allocation
           </h4>
@@ -189,7 +223,7 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
                 </Pie>
                 <Tooltip 
                    contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', fontSize: '10px' }}
-                   formatter={(v: any) => `Rp ${Number(v).toLocaleString()}`}
+                   formatter={(v: any) => `Rp ${(Number(v)||0).toLocaleString()}`}
                 />
                 <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '9px', textTransform: 'uppercase', paddingTop: '15px' }} />
               </PieChart>
@@ -202,7 +236,7 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-10 border-t border-white/5">
         <StatItem label="Total Earnings" value={`Rp ${total.toLocaleString()}`} color="text-white" />
         <StatItem label="Total Logs" value={filteredCommissions.length.toString()} color="text-slate-400" />
-        <StatItem label="Daily Average" value={`Rp ${filteredCommissions.length > 0 ? Math.round(total / (range === 'custom' ? Math.max(1, (new Date(customRange.end).getTime() - new Date(customRange.start).getTime())/(1000*3600*24)) : parseInt(range)||1)).toLocaleString() : 0}`} color="text-slate-400" />
+        <StatItem label="Daily Average" value={`Rp ${avgPerDay.toLocaleString()}`} color="text-slate-400" />
         <StatItem label="Top Performer" value={pieData.length > 0 ? pieData.sort((a,b)=>b.value-a.value)[0].name : 'N/A'} color="text-accent" />
       </div>
 
@@ -213,9 +247,9 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
              <History size={18} className="text-accent" />
              Entries Log
           </h4>
-          <div className="glass rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
-             <div className="overflow-x-auto">
-               <table className="w-full text-left text-[11px] border-collapse">
+          <div className="glass rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl w-full">
+             <div className="overflow-x-auto w-full">
+               <table className="w-full text-left text-[11px] border-collapse min-w-[500px]">
                  <thead className="bg-white/5">
                    <tr>
                      <th className="p-4 font-black text-slate-500 uppercase">Date</th>
@@ -237,7 +271,7 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
                          </div>
                        </td>
                        <td className="p-4 font-bold text-accent">
-                         Rp {Number(c.amount).toLocaleString()}
+                         Rp {(Number(c.amount)||0).toLocaleString()}
                        </td>
                        <td className="p-4 text-right">
                          <div className="flex items-center justify-end gap-1">
