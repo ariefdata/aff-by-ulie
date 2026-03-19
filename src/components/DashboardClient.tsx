@@ -275,13 +275,15 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         </button>
       </main>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-2 flex justify-between items-center z-40 bg-slate-950/80 backdrop-blur-xl">
-         <MobileNavItem icon={<LayoutDashboard size={20} />} label="Dash" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
-         <MobileNavItem icon={<Users size={20} />} label="Acc" active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
-         <MobileNavItem icon={<Smartphone size={20} />} label="SIM" active={activeView === 'SIMS'} onClick={() => setActiveView('SIMS')} />
-         <MobileNavItem icon={<Package size={20} />} label="Samp" active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
-         <MobileNavItem icon={<TrendingUp size={20} />} label="Stats" active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
-      </nav>
+       <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-2 flex items-center gap-6 overflow-x-auto no-scrollbar z-40 bg-slate-950/90 backdrop-blur-2xl">
+          <MobileNavItem icon={<LayoutDashboard size={20} />} label="Dash" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
+          <MobileNavItem icon={<Users size={20} />} label="Acc" active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
+          <MobileNavItem icon={<FileText size={20} />} label="ID" active={activeView === 'IDENTITY'} onClick={() => setActiveView('IDENTITY')} />
+          <MobileNavItem icon={<Smartphone size={20} />} label="SIM" active={activeView === 'SIMS'} onClick={() => setActiveView('SIMS')} />
+          <MobileNavItem icon={<Package size={20} />} label="Samp" active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
+          <MobileNavItem icon={<TrendingUp size={20} />} label="Stats" active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
+          <MobileNavItem icon={<Settings size={20} />} label="Set" active={activeView === 'SETTINGS'} onClick={() => setActiveView('SETTINGS')} />
+       </nav>
 
       <EntityModals 
         editingEntity={editingEntity} modals={modals} setModals={setModals} accounts={accounts}
@@ -548,8 +550,9 @@ function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNo
 
 function MobileNavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
   return (
-    <button onClick={onClick} className={`flex flex-col items-center gap-1 flex-1 py-1 transition-all ${active ? 'text-accent' : 'text-slate-600'}`}>
-      {icon}<span className="text-[9px] font-bold uppercase tracking-tighter">{label}</span>
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 min-w-[50px] py-1 transition-all shrink-0 ${active ? 'text-accent' : 'text-slate-600'}`}>
+      <div className={`p-1 rounded-xl transition-all ${active ? 'bg-accent/10 scale-110' : ''}`}>{icon}</div>
+      <span className="text-[9px] font-bold uppercase tracking-tighter">{label}</span>
     </button>
   )
 }
