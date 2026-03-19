@@ -85,16 +85,22 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   const createEntity = async (
     type: keyof typeof modals, 
     serviceMethod: (data: any) => Promise<any>, 
-    state: any, 
-    setState: (data: any[]) => void, 
+    statePayload: any, 
+    setState: React.Dispatch<React.SetStateAction<any[]>>, 
     resetState: () => void
   ) => {
     try {
-      const added = await serviceMethod(state)
-      setState([added, ...accounts]) // Note: This is simplified
+      if ('account_id' in statePayload && !statePayload.account_id) {
+        throw new Error('Silakan pilih akun Shopee terlebih dahulu.')
+      }
+      const added = await serviceMethod(statePayload)
+      setState(prev => [added, ...prev])
       setModals({...modals, [type]: false})
       resetState()
-    } catch (e) { alert('Gagal menyimpan data.') }
+    } catch (e: any) { 
+      console.error(e)
+      alert(`Gagal menyimpan: ${e.message || 'Error tidak dikenal'}`) 
+    }
   }
 
   // View Renderers
@@ -209,11 +215,11 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         modals={modals} 
         setModals={setModals} 
         accounts={accounts}
-        newAcc={newAcc} setNewAcc={setNewAcc} handleCreateAcc={() => createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''}))}
-        newComm={newComm} setNewComm={setNewComm} handleCreateComm={async (e: any) => { e.preventDefault(); const added = await accountService.createCommission(newComm); setCommissions([added, ...commissions]); setModals({...modals, comm: false}); setNewComm({account_id:'', start_date:'', end_date:'', amount: 0}) }}
-        newSim={newSim} setNewSim={setNewSim} handleCreateSim={async (e: any) => { e.preventDefault(); const added = await accountService.createSim(newSim); setSims([added, ...sims]); setModals({...modals, sim: false}); setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false}) }}
-        newId={newId} setNewId={setNewId} handleCreateId={async (e: any) => { e.preventDefault(); const added = await accountService.createIdentity(newId); setIdentities([added, ...identities]); setModals({...modals, id: false}); setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''}) }}
-        newSample={newSample} setNewSample={setNewSample} handleCreateSample={async (e: any) => { e.preventDefault(); const added = await accountService.createSample(newSample); setSamples([added, ...samples]); setModals({...modals, sample: false}); setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''}) }}
+        newAcc={newAcc} setNewAcc={setNewAcc}        handleCreateAcc={() => createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''}))}
+        newComm={newComm} setNewComm={setNewComm} handleCreateComm={(e: React.FormEvent) => { e.preventDefault(); createEntity('comm', accountService.createCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0})) }}
+        newSim={newSim} setNewSim={setNewSim} handleCreateSim={(e: React.FormEvent) => { e.preventDefault(); createEntity('sim', accountService.createSim, newSim, setSims as any, () => setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) }}
+        newId={newId} setNewId={setNewId} handleCreateId={(e: React.FormEvent) => { e.preventDefault(); createEntity('id', accountService.createIdentity, newId, setIdentities as any, () => setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''})) }}
+        newSample={newSample} setNewSample={setNewSample} handleCreateSample={(e: React.FormEvent) => { e.preventDefault(); createEntity('sample', accountService.createSample, newSample, setSamples as any, () => setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''})) }}
       />
     </div>
   )
