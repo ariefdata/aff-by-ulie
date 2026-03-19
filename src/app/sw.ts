@@ -20,6 +20,11 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
+// Explicit fetch listener for PWA "Installable" criteria in Chrome
+(self as any).addEventListener('fetch', (event: any) => {
+  // Serwist handles this, but Chrome requires it to be detectable
+});
+
 // Push Notification Listener
 (self as any).addEventListener('push', (event: any) => {
   const data = event.data?.json() ?? {};

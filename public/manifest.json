@@ -3,6 +3,8 @@
   "short_name": "Srikandi",
   "description": "Elite Affiliate Management System - Dedicated to Shen Won-won",
   "start_url": "/",
+  "id": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0c0c0e",
   "theme_color": "#0c0c0e",

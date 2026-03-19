@@ -12,6 +12,11 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Srikandi Elite",
+    startupImage: "/logo.png"
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes"
   },
   formatDetection: {
     telephone: false,
@@ -40,10 +45,10 @@ export default function RootLayout({
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                    console.log('SW registered:', registration);
+                  navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(registration) {
+                    console.log('SW Registered with scope:', registration.scope);
                   }, function(err) {
-                    console.log('SW registration failed:', err);
+                    console.log('SW Registration failed:', err);
                   });
                 });
               }
