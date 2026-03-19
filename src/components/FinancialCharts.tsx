@@ -8,7 +8,7 @@ import {
 } from 'recharts'
 import { 
   TrendingUp, Calendar, Filter, ChevronDown, 
-  PieChart as PieIcon, History, Store, Edit2
+  PieChart as PieIcon, History, Store, Edit, Trash2
 } from 'lucide-react'
 import { Commission, ShopeeAccount } from '@/services/accountService'
 
@@ -17,6 +17,7 @@ interface FinancialChartsProps {
   accounts?: ShopeeAccount[]
   fullView?: boolean
   onEditCommission?: (c: Commission) => void
+  onDeleteCommission?: (c: Commission) => void
 }
 
 const COLORS = [
@@ -26,7 +27,7 @@ const COLORS = [
 
 type Range = '1d' | '3d' | '7d' | '30d' | '90d' | '182d' | '365d' | 'custom'
 
-export default function FinancialCharts({ commissions, accounts = [], fullView = false, onEditCommission }: FinancialChartsProps) {
+export default function FinancialCharts({ commissions, accounts = [], fullView = false, onEditCommission, onDeleteCommission }: FinancialChartsProps) {
   const [mounted, setMounted] = useState(false)
   const [range, setRange] = useState<Range>('7d')
   const [customRange, setCustomRange] = useState({ start: '', end: '' })
@@ -138,9 +139,9 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
       )}
 
       {/* Main Charts Row */}
-      <div className="grid lg:grid-cols-3 gap-10 items-start">
+      <div className="grid lg:grid-cols-3 gap-6 md:gap-10 items-start w-full overflow-hidden">
         {/* Multi-Account Bar Chart (Stable) */}
-        <div className="lg:col-span-2 h-[350px] relative">
+        <div className="lg:col-span-2 h-[300px] md:h-[350px] relative w-full">
           {filteredCommissions.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5 rounded-[2rem] border border-dashed border-white/10 opacity-30">
               <Filter size={40} className="text-slate-600 mb-2" />
@@ -239,12 +240,22 @@ export default function FinancialCharts({ commissions, accounts = [], fullView =
                          Rp {Number(c.amount).toLocaleString()}
                        </td>
                        <td className="p-4 text-right">
-                         <button 
-                            onClick={() => onEditCommission?.(c)}
-                            className="p-2 bg-accent/10 text-accent rounded-lg hover:bg-accent hover:text-primary transition-all ml-auto block"
-                         >
-                            <Edit2 size={12} />
-                         </button>
+                         <div className="flex items-center justify-end gap-1">
+                           <button 
+                              onClick={() => onEditCommission?.(c)}
+                              className="p-2 bg-accent/10 text-accent rounded-lg hover:bg-accent hover:text-primary transition-all"
+                              title="Ubah"
+                           >
+                              <Edit size={12} />
+                           </button>
+                           <button 
+                              onClick={() => onDeleteCommission?.(c)}
+                              className="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
+                              title="Hapus"
+                           >
+                              <Trash2 size={12} />
+                           </button>
+                         </div>
                        </td>
                      </tr>
                    ))}

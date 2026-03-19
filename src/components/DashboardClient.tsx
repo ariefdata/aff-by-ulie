@@ -133,35 +133,63 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         </div>
       )
       case 'ACCOUNTS': return (
-        <div className="space-y-6">
-          <SectionHeader title="Shopee Manager" sub="Credential & Store Assets" onAdd={() => { setEditingEntity(null); setNewAcc({username:'',email:'',password:''}); setModals({...modals, acc: true})}} />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-10 w-full overflow-hidden">
+          <SectionHeader title="Shopee Master Accounts" sub="Parent Asset Management" onAdd={() => { setEditingEntity(null); setNewAcc({username:'',email:'',password:''}); setModals({...modals, acc: true}) }} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {accounts.map(acc => (
-              <AccountSimpleCard 
-                key={acc.id} 
-                account={acc} 
-                onCopy={handleCopy} 
-                copiedId={copiedId} 
-                onDelete={() => accountService.deleteAccount(acc.id).then(() => setAccounts(accounts.filter(a => a.id !== acc.id)))}
-                onEdit={() => { setEditingEntity({type: 'acc', id: acc.id}); setNewAcc({username: acc.username, email: acc.email, password: acc.password}); setModals({...modals, acc: true}) }}
+              <EntityCard
+                key={acc.id}
+                title={acc.username}
+                sub={acc.email}
+                entityType="acc"
+                details={{ 'Email': acc.email, 'Password': acc.password }}
+                onDelete={() => confirmDelete('Akun', () => accountService.deleteAccount(acc.id).then(() => setAccounts(accounts.filter(a => a.id !== acc.id))))}
+                onEdit={() => { setEditingEntity({type:'acc', id: acc.id}); setNewAcc({username: acc.username, email: acc.email, password: acc.password}); setModals({...modals, acc: true}) }}
               />
             ))}
           </div>
         </div>
       )
       case 'SIMS': return (
-        <div className="space-y-6">
-          <SectionHeader title="SIM Lifecycle" sub="Active Numbers & WhatsApp Sync" onAdd={() => { setEditingEntity(null); setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false}); setModals({...modals, sim: true})}} />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sims.map(s => <EntityCard key={s.id} title={s.phone_number} sub={accounts.find(a=>a.id===s.account_id)?.username || 'Unknown'} extra={s.expiry_date} onDelete={() => accountService.deleteSim(s.id).then(() => setSims(sims.filter(i => i.id !== s.id)))} onEdit={() => { setEditingEntity({type:'sim', id: s.id}); setNewSim({account_id: s.account_id, phone_number: s.phone_number, expiry_date: s.expiry_date, has_whatsapp: s.has_whatsapp}); setModals({...modals, sim: true}) }} />)}
+        <div className="space-y-10 w-full overflow-hidden">
+          <SectionHeader title="SIM Connectivity" sub="Authentication & OTP Assets" onAdd={() => { setEditingEntity(null); setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false}); setModals({...modals, sim: true}) }} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sims.map(s => (
+              <EntityCard
+                key={s.id}
+                title={s.phone_number}
+                sub={accounts.find(a => a.id === s.account_id)?.username || 'No Parent'}
+                extra={s.expiry_date}
+                entityType="sim"
+                details={{ 'WA Status': s.has_whatsapp ? 'Terdaftar' : 'Tidak' }}
+                onDelete={() => confirmDelete('SIM', () => accountService.deleteSim(s.id).then(() => setSims(sims.filter(i => i.id !== s.id))))}
+                onEdit={() => { setEditingEntity({type:'sim', id: s.id}); setNewSim({account_id: s.account_id, phone_number: s.phone_number, expiry_date: s.expiry_date, has_whatsapp: s.has_whatsapp}); setModals({...modals, sim: true}) }}
+              />
+            ))}
           </div>
         </div>
       )
       case 'IDENTITY': return (
-        <div className="space-y-6">
-          <SectionHeader title="KYC Profiles" sub="KTP, NPWP & Bank Accounts" onAdd={() => { setEditingEntity(null); setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''}); setModals({...modals, id: true})}} />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {identities.map(i => <EntityCard key={i.id} title={i.name_ktp} sub={accounts.find(a=>a.id===i.account_id)?.username || 'Unknown'} extra={i.bank_name} onDelete={() => accountService.deleteIdentity(i.id).then(() => setIdentities(identities.filter(idx => idx.id !== i.id)))} onEdit={() => { setEditingEntity({type:'id', id: i.id}); setNewId({account_id: i.account_id, nik: i.nik, name_ktp: i.name_ktp, npwp: i.npwp, bank_name: i.bank_name, bank_acc: i.bank_acc, address: i.address}); setModals({...modals, id: true}) }} />)}
+        <div className="space-y-10 w-full overflow-hidden">
+          <SectionHeader title="KYC Profiles" sub="Account Verification Data" onAdd={() => { setEditingEntity(null); setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''}); setModals({...modals, id: true}) }} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {identities.map(i => (
+              <EntityCard
+                key={i.id}
+                title={i.name_ktp}
+                sub={accounts.find(a => a.id === i.account_id)?.username || 'No Parent'}
+                entityType="id"
+                details={{
+                  'NIK': i.nik,
+                  'NPWP': i.npwp || '-',
+                  'Bank': i.bank_name,
+                  'Rekening': i.bank_acc,
+                  'Alamat': i.address || '-'
+                }}
+                onDelete={() => confirmDelete('Identitas', () => accountService.deleteIdentity(i.id).then(() => setIdentities(identities.filter(item => item.id !== i.id))))}
+                onEdit={() => { setEditingEntity({type:'id', id: i.id}); setNewId({account_id: i.account_id, nik: i.nik, name_ktp: i.name_ktp, npwp: i.npwp || '', bank_name: i.bank_name, bank_acc: i.bank_acc, address: i.address || ''}); setModals({...modals, id: true}) }}
+              />
+            ))}
           </div>
         </div>
       )
@@ -174,17 +202,17 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         const orphanSamples = samples.filter(s => !accounts.find(a => a.id === s.account_id))
 
         return (
-          <div className="space-y-10">
+          <div className="space-y-10 w-full overflow-hidden">
             <SectionHeader title="Sample Logistics" sub="Product Requests & Tracking" onAdd={() => { setEditingEntity(null); setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''}); setModals({...modals, sample: true})}} />
             
             {groupedSamples.map(group => (
               <div key={group.account.id} className="space-y-4">
                 <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-2xl w-fit">
                   <Users size={14} className="text-accent" />
-                  <span className="text-xs font-bold text-accent uppercase tracking-widest">{group.account.username}</span>
+                  <span className="text-xs font-bold text-accent uppercase tracking-widest leading-none">{group.account.username}</span>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {group.items.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id)))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {group.items.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => confirmDelete('Sample', () => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id))))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
                 </div>
               </div>
             ))}
@@ -193,17 +221,17 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-2xl w-fit">
                   <AlertTriangle size={14} className="text-rose-500" />
-                  <span className="text-xs font-bold text-rose-500 uppercase tracking-widest">Orphan Samples</span>
+                  <span className="text-xs font-bold text-rose-500 uppercase tracking-widest leading-none">Orphan Samples</span>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {orphanSamples.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id)))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {orphanSamples.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => confirmDelete('Sample', () => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id))))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
                 </div>
               </div>
             )}
           </div>
         )
       }
-      case 'ANALYTICS': return <div className="max-w-6xl mx-auto"><FinancialCharts commissions={commissions} accounts={accounts} fullView onEditCommission={((c: Commission) => { setEditingEntity({type:'comm', id: c.id}); setNewComm({account_id: c.account_id, start_date: c.start_date, end_date: c.end_date, amount: Number(c.amount)}); setModals({...modals, comm: true}) }) as any} /></div>
+      case 'ANALYTICS': return <div className="w-full overflow-hidden"><FinancialCharts commissions={commissions} accounts={accounts} fullView onEditCommission={((c: Commission) => { setEditingEntity({type:'comm', id: c.id}); setNewComm({account_id: c.account_id, start_date: c.start_date, end_date: c.end_date, amount: Number(c.amount)}); setModals({...modals, comm: true}) }) as any} onDeleteCommission={(c: Commission) => confirmDelete('Commission Entry', () => accountService.deleteCommission(c.id).then(() => setCommissions(commissions.filter(i => i.id !== c.id))))} /></div>
       case 'SETTINGS': return <SettingsView user={initialUser} onLogout={handleLogout} onPushToggle={() => {}} isPushEnabled={isPushEnabled} />
       default: return null
     }
@@ -227,14 +255,16 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         <NavItem icon={<Settings size={18} />} label="Settings" active={activeView === 'SETTINGS'} onClick={() => setActiveView('SETTINGS')} />
       </aside>
 
-      <main className="flex-1 md:ml-64 p-4 md:p-8 pb-32">
+      <main className="flex-1 md:ml-64 p-4 md:p-8 pb-32 w-full overflow-x-hidden">
         <header className="flex justify-between items-center mb-8 sticky top-0 bg-slate-950/80 backdrop-blur-xl py-4 z-30">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">{activeView}</h1>
-            <p className="text-[10px] text-slate-700 font-black tracking-[0.5em] uppercase">Relational Overhaul V1.2</p>
+            <p className="text-[10px] text-slate-700 font-black tracking-[0.5em] uppercase">Relational Overhaul V1.2.5</p>
           </div>
         </header>
-        {renderContent()}
+        <div className="max-w-full">
+          {renderContent()}
+        </div>
 
         {/* Global Sticky FAB */}
         <button 
@@ -275,40 +305,102 @@ function SectionHeader({ title, sub, onAdd }: { title: string, sub: string, onAd
   )
 }
 
-function AccountSimpleCard({ account, onCopy, copiedId, onDelete, onEdit }: { account: ShopeeAccount, onCopy: (t: string, id: string) => void, copiedId: string | null, onDelete?: (id: string) => void, onEdit: () => void }) {
+interface EntityCardProps {
+  title: string
+  sub: string
+  extra?: string
+  details?: { [key: string]: string }
+  status?: any
+  onDelete: () => void
+  onEdit: () => void
+  entityType?: 'sim' | 'id' | 'sample' | 'acc'
+}
+
+function confirmDelete(name: string, action: () => void) {
+  if (confirm(`Apakah Anda yakin ingin menghapus ${name} ini?`)) {
+    action()
+  }
+}
+
+function CopyButton({ text, label }: { text: string, label?: string }) {
   return (
-    <div className="glass p-5 rounded-3xl border border-white/5 hover:border-accent/30 transition-all group relative">
-      <div className="flex justify-between items-start mb-4">
-        <div><h4 className="text-lg font-bold text-white">{account.username}</h4><p className="text-[10px] text-slate-500 font-mono italic">Shopee Asset</p></div>
-        <div className="flex gap-1">
-          <button onClick={onEdit} className="p-2 text-slate-700 hover:text-accent transition-colors"><Edit size={16} /></button>
-          {onDelete && <button onClick={() => onDelete(account.id)} className="p-2 text-slate-700 hover:text-rose-500 transition-colors"><Trash2 size={16} /></button>}
+    <button 
+      onClick={(e) => {
+        e.stopPropagation()
+        navigator.clipboard.writeText(text)
+        alert(`${label || 'Data'} berhasil disalin!`)
+      }}
+      className="p-1.5 bg-white/5 hover:bg-accent hover:text-primary rounded-lg transition-all text-slate-500 active:scale-90"
+      title="Salin"
+    >
+      <Copy size={12} />
+    </button>
+  )
+}
+
+function EntityCard({ title, sub, extra, details, onDelete, onEdit, entityType }: EntityCardProps) {
+  const getDaysLeft = (dateStr: string) => {
+    const end = new Date(dateStr)
+    const now = new Date()
+    const diff = end.getTime() - now.getTime()
+    const days = Math.ceil(diff / (1000 * 3600 * 24))
+    return days
+  }
+
+  const daysLeft = entityType === 'sim' && extra ? getDaysLeft(extra) : null
+
+  return (
+    <div className="relative group/card glass p-6 rounded-[2.5rem] border border-white/5 hover:border-accent/30 transition-all flex flex-col justify-between h-full hover:shadow-2xl hover:shadow-accent/5">
+      <div className="space-y-4">
+        <div className="flex justify-between items-start">
+          <div className="w-full">
+            <div className="flex items-center gap-2 group/title">
+              <h4 className="text-base font-bold text-white tracking-tight break-all leading-tight">{title}</h4>
+              <CopyButton text={title} />
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{sub}</p>
+              <CopyButton text={sub} />
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={onEdit} className="p-2.5 bg-white/5 text-slate-400 hover:text-accent rounded-2xl transition-all" title="Ubah"><Edit size={14} /></button>
+            <button onClick={onDelete} className="p-2.5 bg-white/5 text-slate-400 hover:text-rose-500 rounded-2xl transition-all" title="Hapus"><Trash2 size={14} /></button>
+          </div>
         </div>
-      </div>
-      <div className="space-y-3">
-        <CredentialBox label="User/Email" val={account.email} onCopy={() => onCopy(account.email, account.id + 'e')} isCopied={copiedId === account.id + 'e'} />
-        <CredentialBox label="Password" val="••••••••" onCopy={() => onCopy(account.password, account.id + 'p')} isCopied={copiedId === account.id + 'p'} />
+
+        {extra && (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="px-3 py-1 bg-white/5 rounded-xl border border-white/10 flex items-center gap-2">
+               <span className="text-[10px] font-bold text-slate-400 uppercase">{entityType === 'sim' ? 'Exp:' : ''} {extra}</span>
+               <CopyButton text={extra} />
+            </div>
+            {daysLeft !== null && (
+              <div className={`px-3 py-1 rounded-xl border flex items-center gap-1 ${daysLeft < 30 ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-green-500/10 border-green-500/20 text-green-500'}`}>
+                <span className="text-[9px] font-black uppercase tracking-widest">{daysLeft > 0 ? `${daysLeft} Hari Lagi` : 'Expired'}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {details && (
+          <div className="pt-2 space-y-2 border-t border-white/5">
+            {Object.entries(details).map(([k, v]) => v && (
+              <div key={k} className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5 group/detail">
+                <div className="min-w-0">
+                  <p className="text-[8px] font-black text-slate-600 uppercase leading-none mb-1">{k}</p>
+                  <p className="text-[10px] text-slate-300 font-bold break-all leading-tight">{v}</p>
+                </div>
+                <CopyButton text={v} label={k} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-function EntityCard({ title, sub, extra, status, onDelete, onEdit }: { title: string, sub: string, extra?: string, status?: any, onDelete: () => void, onEdit: () => void }) {
-  return (
-    <div className="glass p-5 rounded-3xl border border-white/5 hover:border-white/10 transition-all group">
-      <div className="flex justify-between items-start mb-2">
-        <h4 className="text-lg font-bold text-white truncate">{title}</h4>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-          <button onClick={onEdit} className="p-1.5 text-slate-800 hover:text-accent"><Edit size={14} /></button>
-          <button onClick={onDelete} className="p-1.5 text-slate-800 hover:text-rose-500"><Trash2 size={14} /></button>
-        </div>
-      </div>
-      <p className="text-xs text-slate-500 mb-1">{sub}</p>
-      {extra && <p className="text-[10px] text-accent font-black uppercase tracking-widest">{extra}</p>}
-      {status && <div className={`mt-3 inline-block px-2 py-1 rounded-lg text-[9px] font-black uppercase border border-current/20 ${status.color} bg-current/5`}>{status.status}</div>}
-    </div>
-  )
-}
 
 function CredentialBox({ label, val, onCopy, isCopied }: { label: string, val: string, onCopy: () => void, isCopied: boolean }) {
   return (
