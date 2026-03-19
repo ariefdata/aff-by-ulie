@@ -13,6 +13,7 @@ export interface ShopeeAffiliateAccount {
   id: string
   master_id: string
   user_id: string
+  username: string
   email: string
   password: string
   created_at: string

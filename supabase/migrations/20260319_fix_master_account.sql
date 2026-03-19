@@ -12,6 +12,7 @@ ALTER TABLE accounts ADD COLUMN IF NOT EXISTS password TEXT;
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS username TEXT;
 
 -- 2. Update commissions and samples to use affiliate_id
+ALTER TABLE shopee_affiliate_accounts ADD COLUMN IF NOT EXISTS username TEXT;
 ALTER TABLE commissions ADD COLUMN IF NOT EXISTS affiliate_id UUID REFERENCES shopee_affiliate_accounts(id) ON DELETE CASCADE;
 ALTER TABLE samples ADD COLUMN IF NOT EXISTS affiliate_id UUID REFERENCES shopee_affiliate_accounts(id) ON DELETE CASCADE;
 
