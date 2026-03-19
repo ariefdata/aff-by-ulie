@@ -165,14 +165,44 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
           </div>
         </div>
       )
-      case 'SAMPLES': return (
-        <div className="space-y-6">
-          <SectionHeader title="Sample Logistics" sub="Product Requests & Tracking" onAdd={() => { setEditingEntity(null); setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''}); setModals({...modals, sample: true})}} />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {samples.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id)))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
+      case 'SAMPLES': {
+        const groupedSamples = accounts.map(acc => ({
+          account: acc,
+          items: samples.filter(s => s.account_id === acc.id)
+        })).filter(g => g.items.length > 0)
+        
+        const orphanSamples = samples.filter(s => !accounts.find(a => a.id === s.account_id))
+
+        return (
+          <div className="space-y-10">
+            <SectionHeader title="Sample Logistics" sub="Product Requests & Tracking" onAdd={() => { setEditingEntity(null); setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''}); setModals({...modals, sample: true})}} />
+            
+            {groupedSamples.map(group => (
+              <div key={group.account.id} className="space-y-4">
+                <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-2xl w-fit">
+                  <Users size={14} className="text-accent" />
+                  <span className="text-xs font-bold text-accent uppercase tracking-widest">{group.account.username}</span>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {group.items.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id)))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
+                </div>
+              </div>
+            ))}
+
+            {orphanSamples.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-2xl w-fit">
+                  <AlertTriangle size={14} className="text-rose-500" />
+                  <span className="text-xs font-bold text-rose-500 uppercase tracking-widest">Orphan Samples</span>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {orphanSamples.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id)))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )
+        )
+      }
       case 'ANALYTICS': return <div className="max-w-6xl mx-auto"><FinancialCharts commissions={commissions} accounts={accounts} fullView /></div>
       case 'SETTINGS': return <SettingsView user={initialUser} onLogout={handleLogout} onPushToggle={() => {}} isPushEnabled={isPushEnabled} />
       default: return null
@@ -201,13 +231,18 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         <header className="flex justify-between items-center mb-8 sticky top-0 bg-slate-950/80 backdrop-blur-xl py-4 z-30">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">{activeView}</h1>
-            <p className="text-[10px] text-slate-700 font-black tracking-[0.5em] uppercase">Relational Overhaul V1</p>
+            <p className="text-[10px] text-slate-700 font-black tracking-[0.5em] uppercase">Relational Overhaul V1.2</p>
           </div>
-          <button onClick={() => { setEditingEntity(null); setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0}); setModals({...modals, comm: true})}} className="p-4 bg-accent rounded-2xl text-primary shadow-xl accent-glow active:scale-95 transition-all">
-            <Plus size={24} strokeWidth={3} />
-          </button>
         </header>
         {renderContent()}
+
+        {/* Global Sticky FAB */}
+        <button 
+          onClick={() => { setEditingEntity(null); setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0}); setModals({...modals, comm: true})}} 
+          className="fixed bottom-24 right-6 md:bottom-12 md:right-12 p-5 bg-accent rounded-3xl text-primary shadow-2xl accent-glow active:scale-90 transition-all z-50 hover:rotate-90"
+        >
+          <Plus size={32} strokeWidth={3} />
+        </button>
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-2 flex justify-between items-center z-40 bg-slate-950/80 backdrop-blur-xl">
