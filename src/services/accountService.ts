@@ -46,8 +46,7 @@ export interface Commission {
   id: string
   user_id: string
   account_id: string
-  start_date: string
-  end_date: string
+  date: string
   amount: number
   created_at: string
 }

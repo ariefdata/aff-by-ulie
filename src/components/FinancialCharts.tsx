@@ -55,8 +55,8 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
   const filteredCommissions = useMemo(() => {
     const now = new Date()
     return commissions.filter(c => {
-      if (!c.start_date) return false
-      const cDate = new Date(c.start_date)
+      if (!c.date) return false
+      const cDate = new Date(c.date)
       if (isNaN(cDate.getTime())) return false
 
       if (range === 'custom') {
@@ -73,8 +73,8 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
       
       return diffDays <= (range === '182d' ? 182 : range === '365d' ? 365 : limit)
     }).sort((a, b) => {
-      const ta = new Date(a.start_date).getTime()
-      const tb = new Date(b.start_date).getTime()
+      const ta = new Date(a.date).getTime()
+      const tb = new Date(b.date).getTime()
       return (isNaN(ta) ? 0 : ta) - (isNaN(tb) ? 0 : tb)
     })
   }, [commissions, range, customRange])
@@ -83,7 +83,7 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
     const groups: { [key: string]: any } = {}
     filteredCommissions.forEach(c => {
       try {
-        const d = new Date(c.start_date)
+        const d = new Date(c.date)
         if (isNaN(d.getTime())) return
         const dateKey = `${d.getDate()}/${d.getMonth() + 1}`
         const accName = accounts.find(a => a.id === c.account_id)?.username || 'Other'
@@ -140,7 +140,7 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
             <TrendingUp size={24} className="text-rose-500 animate-pulse" />
             Performance
           </h3>
-          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black underline decoration-rose-500/30 underline-offset-4">Neon Matrix V2.5</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black underline decoration-rose-500/30 underline-offset-4">Payout Ledger V3.0</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -175,7 +175,7 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
           {filteredCommissions.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 opacity-30">
               <Filter size={40} className="text-slate-600 mb-2" />
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center px-8">No data logs found</p>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center px-8">No payout logs found</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -259,7 +259,7 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
                <table className="w-full text-left text-[11px] border-collapse min-w-[500px]">
                  <thead className="bg-white/5">
                    <tr>
-                     <th className="p-4 font-black text-slate-500 uppercase">Date</th>
+                     <th className="p-4 font-black text-slate-500 uppercase">Payout Date</th>
                      <th className="p-4 font-black text-slate-500 uppercase">Account</th>
                      <th className="p-4 font-black text-slate-500 uppercase">Amount</th>
                      <th className="p-4 font-black text-slate-500 uppercase text-right">Actions</th>
@@ -269,7 +269,7 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
                    {filteredCommissions.slice(-25).reverse().map((c) => (
                      <tr key={c.id} className="hover:bg-white/5 transition-colors group">
                        <td className="p-4 text-slate-400 font-mono">
-                         {new Date(c.start_date).toLocaleDateString()}
+                         {new Date(c.date).toLocaleDateString()}
                        </td>
                        <td className="p-4">
                          <div className="flex items-center gap-2">

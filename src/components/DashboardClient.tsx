@@ -49,7 +49,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
   // Form States
   const [newAcc, setNewAcc] = useState({ username: '', email: '', password: '' })
-  const [newComm, setNewComm] = useState({ account_id: '', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0 })
+  const [newComm, setNewComm] = useState({ account_id: '', date: new Date().toISOString().split('T')[0], amount: 0 })
   const [newSim, setNewSim] = useState({ account_id: '', phone_number: '', expiry_date: '', has_whatsapp: false })
   const [newId, setNewId] = useState({ account_id: '', nik: '', name_ktp: '', npwp: '', bank_name: '', bank_acc: '', address: '' })
   const [newSample, setNewSample] = useState({ account_id: '', product_name: '', shop_name: '', brand_name: '' })
@@ -127,7 +127,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
              <StatCard label="Identity KYC" value={identities.length.toString()} sub="Profiles" />
           </div>
           <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2"><FinancialCharts commissions={commissions} accounts={accounts} onEditCommission={((c: Commission) => { setEditingEntity({type:'comm', id: c.id}); setNewComm({account_id: c.account_id, start_date: c.start_date, end_date: c.end_date, amount: Number(c.amount)}); setModals({...modals, comm: true}) }) as any} /></div>
+            <div className="lg:col-span-2"><FinancialCharts commissions={commissions} accounts={accounts} onEditCommission={(c: Commission) => { setEditingEntity({type:'comm', id: c.id}); setNewComm({account_id: c.account_id, date: c.date, amount: Number(c.amount)}); setModals({...modals, comm: true}) }} /></div>
             <div><SampleTracker samples={samples} /></div>
           </div>
         </div>
@@ -231,7 +231,21 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
           </div>
         )
       }
-      case 'ANALYTICS': return <div className="w-full overflow-hidden"><FinancialCharts commissions={commissions} accounts={accounts} fullView onEditCommission={((c: Commission) => { setEditingEntity({type:'comm', id: c.id}); setNewComm({account_id: c.account_id, start_date: c.start_date, end_date: c.end_date, amount: Number(c.amount)}); setModals({...modals, comm: true}) }) as any} onDeleteCommission={(c: Commission) => confirmDelete('Commission Entry', () => accountService.deleteCommission(c.id).then(() => setCommissions(commissions.filter(i => i.id !== c.id))))} /></div>
+      case 'ANALYTICS': return (
+        <div className="w-full overflow-hidden">
+          <FinancialCharts 
+            commissions={commissions} 
+            accounts={accounts} 
+            fullView 
+            onEditCommission={(c: Commission) => { 
+              setEditingEntity({type:'comm', id: c.id}); 
+              setNewComm({account_id: c.account_id, date: c.date, amount: c.amount}); 
+              setModals({...modals, comm: true}); 
+            }} 
+            onDeleteCommission={(c: Commission) => confirmDelete('Komisi', () => accountService.deleteCommission(c.id).then(() => setCommissions(commissions.filter(item => item.id !== c.id))))} 
+          />
+        </div>
+      )
       case 'SETTINGS': return <SettingsView user={initialUser} onLogout={handleLogout} onPushToggle={() => {}} isPushEnabled={isPushEnabled} />
       default: return null
     }
@@ -288,7 +302,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       <EntityModals 
         editingEntity={editingEntity} modals={modals} setModals={setModals} accounts={accounts}
         newAcc={newAcc} setNewAcc={setNewAcc} handleCreateAcc={() => editingEntity ? handleUpdate('acc', accountService.updateAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''})) : createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''}))}
-        newComm={newComm} setNewComm={setNewComm} handleCreateComm={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('comm', accountService.updateCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0})) : createEntity('comm', accountService.createCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0})) }}
+        newComm={newComm} setNewComm={setNewComm} handleCreateComm={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('comm', accountService.updateCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', date: new Date().toISOString().split('T')[0], amount: 0})) : createEntity('comm', accountService.createCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', date: new Date().toISOString().split('T')[0], amount: 0})) }}
         newSim={newSim} setNewSim={setNewSim} handleCreateSim={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sim', accountService.updateSim, newSim, setSims as any, () => setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) : createEntity('sim', accountService.createSim, newSim, setSims as any, () => setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) }}
         newId={newId} setNewId={setNewId} handleCreateId={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('id', accountService.updateIdentity, newId, setIdentities as any, () => setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''})) : createEntity('id', accountService.createIdentity, newId, setIdentities as any, () => setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''})) }}
         newSample={newSample} setNewSample={setNewSample} handleCreateSample={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sample', accountService.updateSample, newSample, setSamples as any, () => setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''})) : createEntity('sample', accountService.createSample, newSample, setSamples as any, () => setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''})) }}
@@ -432,11 +446,20 @@ function EntityModals({ editingEntity, modals, setModals, accounts, newAcc, setN
         <Modal title={editingEntity ? "Edit Komisi" : "Catat Komisi Harian"} onClose={() => setModals({...modals, comm: false})}>
           <form onSubmit={handleCreateComm} className="space-y-4">
              <AccountSelect accounts={accounts} value={newComm.account_id} onChange={(v: string) => setNewComm({...newComm, account_id: v})} />
-             <div className="grid grid-cols-2 gap-4">
-               <FormInput label="Mulai Tanggal" type="date" value={newComm.start_date} onChange={(v: string) => setNewComm({...newComm, start_date: v})} required />
-               <FormInput label="Sampai Tanggal" type="date" value={newComm.end_date} onChange={(v: string) => setNewComm({...newComm, end_date: v})} required />
-             </div>
-             <FormInput label="Besar Komisi (Rp)" type="number" value={newComm.amount.toString()} onChange={(v: string) => setNewComm({...newComm, amount: parseFloat(v) || 0})} required />
+             <div className="space-y-4">
+            <select value={newComm.account_id} onChange={e => setNewComm({...newComm, account_id: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-accent">
+              <option value="" className="bg-slate-900">Pilih Akun Shopee</option>
+              {accounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.username}</option>)}
+            </select>
+            <div className="space-y-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase ml-2">Tanggal Cair</label>
+              <input type="date" value={newComm.date} onChange={e => setNewComm({...newComm, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase ml-2">Nominal Komisi (IDR)</label>
+              <input type="number" placeholder="Nominal Rp" value={newComm.amount} onChange={e => setNewComm({...newComm, amount: Number(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
+            </div>
+          </div>
              <SubmitButton label={editingEntity ? "Simpan Perubahan" : "Simpan Komisi"} />
           </form>
         </Modal>
