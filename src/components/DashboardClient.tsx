@@ -259,7 +259,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         <header className="flex justify-between items-center mb-8 sticky top-0 bg-slate-950/80 backdrop-blur-xl py-4 z-30">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">{activeView}</h1>
-            <p className="text-[10px] text-slate-700 font-black tracking-[0.5em] uppercase">Relational Overhaul V1.2.5</p>
+            <p className="text-[10px] text-slate-700 font-black tracking-[0.5em] uppercase">Relational Overhaul V1.2.6-Neon</p>
           </div>
         </header>
         <div className="max-w-full">
@@ -268,10 +268,10 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
         {/* Global Sticky FAB */}
         <button 
-          onClick={() => { setEditingEntity(null); setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0}); setModals({...modals, comm: true})}} 
-          className="fixed bottom-24 right-6 md:bottom-12 md:right-12 p-5 bg-accent rounded-3xl text-primary shadow-2xl accent-glow active:scale-90 transition-all z-50 hover:rotate-90"
+          onClick={() => { setEditingEntity(null); setModals({...modals, comm: true})}}
+          className="fixed bottom-24 right-6 w-12 h-12 bg-accent text-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 border-4 border-slate-950 group"
         >
-          <Plus size={32} strokeWidth={3} />
+          <Plus size={24} className="group-active:rotate-90 transition-transform" />
         </button>
       </main>
 

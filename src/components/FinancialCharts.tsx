@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useMemo, useEffect, ReactNode } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { 
   XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, Legend
+  AreaChart, Area, PieChart, Pie, Cell, Legend
 } from 'recharts'
 import { 
   TrendingUp, Calendar, Filter, ChevronDown, 
@@ -21,8 +21,8 @@ interface FinancialChartsProps {
 }
 
 const COLORS = [
-  '#e11d48', '#fb7185', '#9f1239', '#fda4af', '#4c0519', '#be123c',
-  '#f43f5e', '#ec4899', '#fbcfe8', '#db2777', '#9d174d'
+  '#f43f5e', '#fb7185', '#9f1239', '#fda4af', '#4c0519', '#be123c',
+  '#e11d48', '#ec4899', '#fbcfe8', '#db2777', '#9d174d'
 ]
 
 type Range = '1d' | '3d' | '7d' | '30d' | '90d' | '182d' | '365d' | 'custom'
@@ -52,7 +52,6 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
   const [range, setRange] = useState<Range>('7d')
   const [customRange, setCustomRange] = useState({ start: '', end: '' })
 
-  // Filtering Logic with total safety
   const filteredCommissions = useMemo(() => {
     const now = new Date()
     return commissions.filter(c => {
@@ -80,7 +79,6 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
     })
   }, [commissions, range, customRange])
 
-  // Chart Data: Multi-line Timeline (using BarChart for stability)
   const timelineData = useMemo(() => {
     const groups: { [key: string]: any } = {}
     filteredCommissions.forEach(c => {
@@ -108,7 +106,6 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
     return Array.from(names)
   }, [filteredCommissions, accounts])
 
-  // Chart Data: Pie
   const pieData = useMemo(() => {
     const groups: { [key: string]: number } = {}
     filteredCommissions.forEach(c => {
@@ -120,7 +117,6 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
 
   const total = filteredCommissions.reduce((sum, c) => sum + (Number(c.amount) || 0), 0)
 
-  // Robust Days Calculation
   const daysOfRange = useMemo(() => {
     if (range === 'custom') {
       if (!customRange.start || !customRange.end) return 7
@@ -141,17 +137,17 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-bold text-white flex items-center gap-3">
-            <TrendingUp size={24} className="text-accent" />
+            <TrendingUp size={24} className="text-rose-500 animate-pulse" />
             Performance
           </h3>
-          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black underline decoration-accent/30 underline-offset-4">Stable Hardened V2.1</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black underline decoration-rose-500/30 underline-offset-4">Neon Matrix V2.5</p>
         </div>
         
         <div className="flex items-center gap-2">
           <select 
             value={range} 
             onChange={(e) => setRange(e.target.value as Range)}
-            className="bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-accent transition-all"
+            className="bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-rose-500 transition-all font-mono"
           >
             <option value="1d" className="bg-slate-900">1 Day</option>
             <option value="3d" className="bg-slate-900">3 Days</option>
@@ -174,43 +170,54 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
 
       {/* Main Charts Row */}
       <div className="grid lg:grid-cols-3 gap-6 md:gap-10 items-start w-full overflow-hidden">
-        {/* Multi-Account Bar Chart (Stable) */}
-        <div className="lg:col-span-2 h-[300px] md:h-[350px] relative w-full">
+        {/* Multi-Account Neon Area Chart */}
+        <div className="lg:col-span-2 h-[300px] md:h-[400px] relative w-full">
           {filteredCommissions.length === 0 ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5 rounded-[2rem] border border-dashed border-white/10 opacity-30">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 opacity-30">
               <Filter size={40} className="text-slate-600 mb-2" />
               <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center px-8">No data logs found</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={timelineData}>
+              <AreaChart data={timelineData}>
+                <defs>
+                  {uniqueAccNames.map((name, i) => (
+                    <linearGradient key={`grad-${i}`} id={`color-${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS[i % COLORS.length]} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={COLORS[i % COLORS.length]} stopOpacity={0}/>
+                    </linearGradient>
+                  ))}
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 10}} />
-                <YAxis hide />
+                <YAxis hide domain={[0, 'auto']} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#0f172a', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }}
-                  cursor={{fill: 'rgba(255,255,255,0.02)'}}
+                  cursor={{stroke: 'rgba(255,255,255,0.05)', strokeWidth: 2}}
                   formatter={(v: any) => `Rp ${(Number(v)||0).toLocaleString()}`}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', paddingTop: '10px' }} />
                 {uniqueAccNames.map((name, i) => (
-                  <Bar 
+                  <Area 
                     key={name}
-                    dataKey={name} 
-                    fill={COLORS[i % COLORS.length]} 
-                    stackId="a"
-                    radius={[4, 4, 0, 0]}
+                    type="monotone"
+                    dataKey={name}
+                    stroke={COLORS[i % COLORS.length]}
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill={`url(#color-${i})`}
+                    stackId="1"
                     isAnimationActive={false}
                   />
                 ))}
-              </BarChart>
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
 
         {/* Pie Distribution */}
-        <div className="h-[300px] md:h-[350px] flex flex-col glass p-6 rounded-[2rem] border border-white/5 w-full">
-          <h4 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+        <div className="h-[300px] md:h-[400px] flex flex-col glass p-6 rounded-[2.5rem] border border-white/5 w-full">
+          <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
             <PieIcon size={14} /> Allocation
           </h4>
           {filteredCommissions.length === 0 ? (
@@ -218,7 +225,7 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value" isAnimationActive={false}>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={2} dataKey="value" isAnimationActive={false}>
                   {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />)}
                 </Pie>
                 <Tooltip 
@@ -237,14 +244,14 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
         <StatItem label="Total Earnings" value={`Rp ${total.toLocaleString()}`} color="text-white" />
         <StatItem label="Total Logs" value={filteredCommissions.length.toString()} color="text-slate-400" />
         <StatItem label="Daily Average" value={`Rp ${avgPerDay.toLocaleString()}`} color="text-slate-400" />
-        <StatItem label="Top Performer" value={pieData.length > 0 ? [...pieData].sort((a,b)=>b.value-a.value)[0].name : 'N/A'} color="text-accent" />
+        <StatItem label="Top Performer" value={pieData.length > 0 ? [...pieData].sort((a,b)=>b.value-a.value)[0].name : 'N/A'} color="text-rose-500" />
       </div>
 
       {/* History Table */}
       {fullView && filteredCommissions.length > 0 && (
         <div className="pt-12 space-y-6">
           <h4 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
-             <History size={18} className="text-accent" />
+             <History size={18} className="text-rose-500" />
              Entries Log
           </h4>
           <div className="glass rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl w-full">
@@ -270,21 +277,21 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
                             <span className="font-bold text-white">{accounts.find(a => a.id === c.account_id)?.username || 'Unknown'}</span>
                          </div>
                        </td>
-                       <td className="p-4 font-bold text-accent">
+                       <td className="p-4 font-bold text-rose-500">
                          Rp {(Number(c.amount)||0).toLocaleString()}
                        </td>
                        <td className="p-4 text-right">
                          <div className="flex items-center justify-end gap-1">
                            <button 
                               onClick={() => onEditCommission?.(c)}
-                              className="p-2 bg-accent/10 text-accent rounded-lg hover:bg-accent hover:text-primary transition-all"
+                              className="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
                               title="Ubah"
                            >
                               <Edit size={12} />
                            </button>
                            <button 
                               onClick={() => onDeleteCommission?.(c)}
-                              className="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
+                              className="p-2 bg-slate-900 text-slate-500 rounded-lg hover:bg-white hover:text-slate-900 transition-all border border-white/5"
                               title="Hapus"
                            >
                               <Trash2 size={12} />
