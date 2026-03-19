@@ -219,18 +219,30 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
               const myPays = payAccounts.filter(p => p.master_id === acc.id)
               return (
                 <div key={acc.id} className="space-y-6">
-                  <div className="flex items-center justify-between bg-white/5 p-4 rounded-3xl border border-white/10">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between bg-white/5 p-4 md:p-6 rounded-[2rem] border border-white/10 gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-accent/20 rounded-2xl text-accent"><LayoutDashboard size={20} /></div>
-                      <div>
-                        <h4 className="text-lg font-bold text-white uppercase">{acc.username}</h4>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Master ID: {acc.id.slice(0,8)}</p>
+                      <div className="p-4 bg-accent/20 rounded-2xl text-accent"><LayoutDashboard size={24} /></div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="text-lg md:text-xl font-bold text-white uppercase truncate">{acc.username}</h4>
+                          <CopyButton text={acc.username} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">HUB: {acc.id.slice(0,8)}</p>
+                          <CopyButton text={acc.id} />
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <button onClick={() => { setEditingEntity(null); setNewAff({...newAff, master_id: acc.id}); setModals({...modals, aff: true}) }} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 border border-white/10">+ Affiliate</button>
-                       <button onClick={() => { setEditingEntity(null); setNewPay({...newPay, master_id: acc.id}); setModals({...modals, pay: true}) }} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 border border-white/10">+ Shopee Pay</button>
-                       <button onClick={() => confirmDelete('Master Account', () => accountService.deleteAccount(acc.id).then(() => setAccounts(accounts.filter(a => a.id !== acc.id))))} className="p-2 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    
+                    <div className="flex items-center justify-between md:justify-end gap-2 p-1 md:p-0 bg-black/20 md:bg-transparent rounded-2xl">
+                       <div className="flex gap-1.5 flex-1 md:flex-none">
+                         <button onClick={() => { setEditingEntity(null); setNewAff({...newAff, master_id: acc.id}); setModals({...modals, aff: true}) }} className="flex-1 md:flex-none px-4 py-2.5 bg-accent/10 border border-accent/20 hover:bg-accent/20 rounded-xl text-[10px] font-black uppercase text-accent transition-all">+ Affiliate</button>
+                         <button onClick={() => { setEditingEntity(null); setNewPay({...newPay, master_id: acc.id}); setModals({...modals, pay: true}) }} className="flex-1 md:flex-none px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 border border-white/10 border-dashed transition-all">+ Shopee Pay</button>
+                       </div>
+                       <div className="flex gap-1.5 pl-2 border-l border-white/10 ml-1">
+                         <button onClick={() => { setEditingEntity({type:'acc', id: acc.id}); setNewAcc({username: acc.username}); setModals({...modals, acc: true}) }} className="p-2.5 md:p-2 bg-white/5 text-slate-400 rounded-xl hover:bg-white/10 transition-all border border-white/5" title="Edit Hub"><Edit size={16} /></button>
+                         <button onClick={() => confirmDelete('Master Hub', () => accountService.deleteAccount(acc.id).then(() => setAccounts(accounts.filter(a => a.id !== acc.id))))} className="p-2.5 md:p-2 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10" title="Hapus Hub"><Trash2 size={16} /></button>
+                       </div>
                     </div>
                   </div>
 
