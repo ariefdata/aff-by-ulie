@@ -79,32 +79,25 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
     })
   }, [commissions, range, customRange])
 
+  // Chart Data: Accumulated Timeline
   const timelineData = useMemo(() => {
-    const groups: { [key: string]: any } = {}
+    const groups: { [key: string]: { name: string, total: number } } = {}
     filteredCommissions.forEach(c => {
       try {
         const d = new Date(c.date)
         if (isNaN(d.getTime())) return
         const dateKey = `${d.getDate()}/${d.getMonth() + 1}`
-        const accName = accounts.find(a => a.id === c.account_id)?.username || 'Other'
         
-        if (!groups[dateKey]) groups[dateKey] = { name: dateKey }
-        groups[dateKey][accName] = (groups[dateKey][accName] || 0) + (Number(c.amount) || 0)
+        if (!groups[dateKey]) {
+          groups[dateKey] = { name: dateKey, total: 0 }
+        }
+        groups[dateKey].total += (Number(c.amount) || 0)
       } catch (e) {
         console.warn('Skipping invalid entry', c)
       }
     })
     return Object.values(groups)
-  }, [filteredCommissions, accounts])
-
-  const uniqueAccNames = useMemo(() => {
-    const names = new Set<string>()
-    filteredCommissions.forEach(c => {
-      const acc = accounts.find(a => a.id === c.account_id)
-      names.add(acc?.username || 'Other')
-    })
-    return Array.from(names)
-  }, [filteredCommissions, accounts])
+  }, [filteredCommissions])
 
   const pieData = useMemo(() => {
     const groups: { [key: string]: number } = {}
@@ -140,7 +133,7 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
             <TrendingUp size={24} className="text-rose-500 animate-pulse" />
             Performance
           </h3>
-          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black underline decoration-rose-500/30 underline-offset-4">Payout Ledger V3.0</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black underline decoration-rose-500/30 underline-offset-4">Neon Pulse V3.5-Accumulated</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -170,23 +163,21 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
 
       {/* Main Charts Row */}
       <div className="grid lg:grid-cols-3 gap-6 md:gap-10 items-start w-full overflow-hidden">
-        {/* Multi-Account Neon Area Chart */}
+        {/* Accumulated Neon Area Chart */}
         <div className="lg:col-span-2 h-[300px] md:h-[400px] relative w-full">
           {filteredCommissions.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 opacity-30">
               <Filter size={40} className="text-slate-600 mb-2" />
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center px-8">No payout logs found</p>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center px-8">No data logs found</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={timelineData}>
                 <defs>
-                  {uniqueAccNames.map((name, i) => (
-                    <linearGradient key={`grad-${i}`} id={`color-${i}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS[i % COLORS.length]} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={COLORS[i % COLORS.length]} stopOpacity={0}/>
-                    </linearGradient>
-                  ))}
+                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 10}} />
@@ -196,20 +187,15 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
                   cursor={{stroke: 'rgba(255,255,255,0.05)', strokeWidth: 2}}
                   formatter={(v: any) => `Rp ${(Number(v)||0).toLocaleString()}`}
                 />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', paddingTop: '10px' }} />
-                {uniqueAccNames.map((name, i) => (
-                  <Area 
-                    key={name}
-                    type="monotone"
-                    dataKey={name}
-                    stroke={COLORS[i % COLORS.length]}
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill={`url(#color-${i})`}
-                    stackId="1"
-                    isAnimationActive={false}
-                  />
-                ))}
+                <Area 
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#f43f5e"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorTotal)"
+                  isAnimationActive={false}
+                />
               </AreaChart>
             </ResponsiveContainer>
           )}
