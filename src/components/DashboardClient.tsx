@@ -171,8 +171,20 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
   const handleCreateAff = () => editingEntity ? handleUpdate('aff', accountService.updateAffiliateAccount, newAff, setAffiliateAccounts as any, () => setNewAff({master_id:'', email:'', password:''})) : createEntity('aff', accountService.createAffiliateAccount, newAff, setAffiliateAccounts as any, () => setNewAff({master_id:'', email:'', password:''}))
   const handleCreatePay = () => editingEntity ? handleUpdate('pay', accountService.updatePayAccount, newPay, setPayAccounts as any, () => setNewPay({master_id:'', name_ktp:'', nik:'', ktp_image_url:''})) : createEntity('pay', accountService.createPayAccount, newPay, setPayAccounts as any, () => setNewPay({master_id:'', name_ktp:'', nik:'', ktp_image_url:''}))
-  const handleCreateId = (e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('id', accountService.updateIdentity, newId, setIdentities as any, () => setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''})) : createEntity('id', accountService.createIdentity, newId, setIdentities as any, () => setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''})) }
-  const handleCreateSim = (e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sim', accountService.updateSim, newSim, setSims as any, () => setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) : createEntity('sim', accountService.createSim, newSim, setSims as any, () => setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) }
+  const handleCreateId = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    const payload = { ...newId, affiliate_id: newId.affiliate_id || undefined };
+    editingEntity ? handleUpdate('id', accountService.updateIdentity, payload, setIdentities as any, () => setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''})) : createEntity('id', accountService.createIdentity, payload, setIdentities as any, () => setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''})) 
+  }
+  const handleCreateSim = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    const payload = { 
+      ...newSim, 
+      affiliate_id: newSim.affiliate_id || undefined, 
+      pay_id: newSim.pay_id || undefined 
+    };
+    editingEntity ? handleUpdate('sim', accountService.updateSim, payload, setSims as any, () => setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) : createEntity('sim', accountService.createSim, payload, setSims as any, () => setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) 
+  }
   const handleCreateComm = (e: React.FormEvent) => { e.preventDefault(); const payload = {...newComm, amount: Number(newComm.amount)}; editingEntity ? handleUpdate('comm', accountService.updateCommission, payload, setCommissions as any, () => setNewComm({affiliate_id:'', date: new Date().toISOString().split('T')[0], amount: ''})) : createEntity('comm', accountService.createCommission, payload, setCommissions as any, () => setNewComm({affiliate_id:'', date: new Date().toISOString().split('T')[0], amount: ''})) }
   const handleCreateSample = (e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sample', accountService.updateSample, newSample, setSamples as any, () => setNewSample({affiliate_id:'', product_name:'', shop_name:'', brand_name:''})) : createEntity('sample', accountService.createSample, newSample, setSamples as any, () => setNewSample({affiliate_id:'', product_name:'', shop_name:'', brand_name:''})) }
 

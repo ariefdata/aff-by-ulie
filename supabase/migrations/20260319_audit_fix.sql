@@ -110,3 +110,13 @@ CREATE POLICY "manage_own_identities" ON identities FOR ALL USING (auth.uid() = 
 CREATE POLICY "manage_own_sims" ON sims FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "manage_own_commissions" ON commissions FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "manage_own_samples" ON samples FOR ALL USING (auth.uid() = user_id);
+
+-- 8. Storage RLS (for account-documents bucket)
+-- Note: Assuming the bucket 'account-documents' exists.
+-- These policies allow authenticated users to upload and manage their own files.
+INSERT INTO storage.buckets (id, name, public) VALUES ('account-documents', 'account-documents', true) ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Allow authenticated uploads" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'account-documents');
+CREATE POLICY "Allow authenticated selects" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'account-documents');
+CREATE POLICY "Allow authenticated updates" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'account-documents');
+CREATE POLICY "Allow authenticated deletes" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'account-documents');
