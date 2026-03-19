@@ -41,6 +41,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   const [isPushEnabled, setIsPushEnabled] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [isIOS, setIsIOS] = useState(false)
 
   // Modals Visibility
   const [modals, setModals] = useState({
@@ -73,9 +74,17 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       setLoading(false)
     }
     fetchData()
-    pushService.getSubscription().then(sub => setIsPushEnabled(!!sub))
+    pushService.getSubscription().then(sub => {
+      setIsPushEnabled(!!sub)
+      console.log('Push status:', !!sub)
+    })
+
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    if (isIOSDevice && !isStandalone) setIsIOS(true)
 
     window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('beforeinstallprompt fired')
       e.preventDefault()
       setDeferredPrompt(e)
     })
@@ -86,6 +95,31 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     deferredPrompt.prompt()
     const { outcome } = await deferredPrompt.userChoice
     if (outcome === 'accepted') setDeferredPrompt(null)
+  }
+
+  const handlePushToggle = async () => {
+    try {
+      if (isPushEnabled) {
+        await pushService.unsubscribe()
+        setIsPushEnabled(false)
+      } else {
+        const sub = await pushService.register()
+        if (sub) setIsPushEnabled(true)
+      }
+    } catch (e: any) {
+      alert(`Push Error: ${e.message}`)
+    }
+  }
+
+  const handleManualRegister = async () => {
+    if (!('serviceWorker' in navigator)) return
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js')
+      console.log('Manual SW registration successful:', reg)
+      alert('Service Worker berhasil didaftarkan ulang. Silakan segarkan halaman jika banner instalasi belum muncul.')
+    } catch (e: any) {
+      alert(`Manual Register Error: ${e.message}`)
+    }
   }
 
   // Handlers
@@ -140,16 +174,18 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
              <StatCard label="Identity KYC" value={identities.length.toString()} sub="Profiles" />
           </div>
 
-          {deferredPrompt && (
-             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass p-6 rounded-[2rem] border border-accent/20 flex flex-col md:flex-row items-center justify-between gap-4 bg-accent/5">
+           {(deferredPrompt || isIOS) && (
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass p-6 rounded-[2.5rem] border border-accent/20 flex flex-col md:flex-row items-center justify-between gap-4 bg-accent/5">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-accent/20 rounded-2xl text-accent"><Smartphone size={24} /></div>
                   <div>
-                    <h4 className="text-white font-bold">Instal Aplikasi Ulie</h4>
-                    <p className="text-xs text-slate-500">Akses lebih cepat & mudah dari layar utama HP Anda.</p>
+                    <h4 className="text-white font-bold">Aplikasi Srikandi Elite</h4>
+                    <p className="text-xs text-slate-500">
+                      {isIOS ? 'Ketuk "Share" (kotak panah) lalu "Add to Home Screen"' : 'Instal aplikasi untuk akses lebih cepat & mudah.'}
+                    </p>
                   </div>
                 </div>
-                <button onClick={handleInstall} className="w-full md:w-auto px-8 py-3 bg-accent text-primary font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">Instal Sekarang</button>
+                {!isIOS && <button onClick={handleInstall} className="w-full md:w-auto px-8 py-3 bg-accent text-primary font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">Instal Sekarang</button>}
              </motion.div>
            )}
 
@@ -273,7 +309,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
           />
         </div>
       )
-      case 'SETTINGS': return <SettingsView user={initialUser} onLogout={handleLogout} onPushToggle={() => {}} isPushEnabled={isPushEnabled} />
+      case 'SETTINGS': return <SettingsView user={initialUser} onLogout={handleLogout} onPushToggle={handlePushToggle} onManualRegister={handleManualRegister} isPushEnabled={isPushEnabled} />
       default: return null
     }
   }
@@ -626,7 +662,7 @@ function LoadingPulse() {
   )
 }
 
-function SettingsView({ user, onLogout, onPushToggle, isPushEnabled }: { user: any, onLogout: () => void, onPushToggle: () => void, isPushEnabled: boolean }) {
+function SettingsView({ user, onLogout, onPushToggle, onManualRegister, isPushEnabled }: { user: any, onLogout: () => void, onPushToggle: () => void, onManualRegister: () => void, isPushEnabled: boolean }) {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="glass p-8 rounded-[2.5rem] border border-white/5">
@@ -638,9 +674,17 @@ function SettingsView({ user, onLogout, onPushToggle, isPushEnabled }: { user: a
               <p className="text-slate-500 text-sm">{user.email}</p>
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-            <div><p className="text-sm font-bold text-white">Push Notifications</p><p className="text-[10px] text-slate-500 italic opacity-60">Alert SIM & Deadline Sampel</p></div>
-            <div onClick={onPushToggle} className={`w-12 h-6 rounded-full relative cursor-pointer transition-all duration-300 ${isPushEnabled ? 'bg-accent/40' : 'bg-slate-800'}`}><motion.div animate={{ x: isPushEnabled ? 24 : 0 }} className={`absolute left-1 top-1 w-4 h-4 rounded-full shadow-lg ${isPushEnabled ? 'bg-accent' : 'bg-slate-600'}`} /></div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+              <div><p className="text-sm font-bold text-white">Push Notifications</p><p className="text-[10px] text-slate-500 italic opacity-60">Alert SIM & Deadline Sampel</p></div>
+              <div onClick={onPushToggle} className={`w-12 h-6 rounded-full relative cursor-pointer transition-all duration-300 ${isPushEnabled ? 'bg-accent/40' : 'bg-slate-800'}`}><motion.div animate={{ x: isPushEnabled ? 24 : 0 }} className={`absolute left-1 top-1 w-4 h-4 rounded-full shadow-lg ${isPushEnabled ? 'bg-accent' : 'bg-slate-600'}`} /></div>
+            </div>
+
+            <button onClick={onManualRegister} className="w-full flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all">
+              <div className="text-left"><p className="text-sm font-bold text-white">Repair PWA & Push</p><p className="text-[10px] text-slate-500 italic opacity-60">Daftarkan ulang sistem di browser</p></div>
+              <div className="p-2 bg-white/5 rounded-xl"><Smartphone size={16} className="text-slate-400" /></div>
+            </button>
           </div>
       </div>
       <button onClick={onLogout} className="w-full py-5 bg-rose-500/10 text-rose-500 rounded-[1.5rem] text-sm font-black uppercase tracking-[0.2em] border border-rose-500/20 active:scale-95 transition-all">Sign Out System</button>
