@@ -237,7 +237,7 @@ function FinancialChartsInner({ commissions, accounts = [], fullView = false, on
         <StatItem label="Total Earnings" value={`Rp ${total.toLocaleString()}`} color="text-white" />
         <StatItem label="Total Logs" value={filteredCommissions.length.toString()} color="text-slate-400" />
         <StatItem label="Daily Average" value={`Rp ${avgPerDay.toLocaleString()}`} color="text-slate-400" />
-        <StatItem label="Top Performer" value={pieData.length > 0 ? pieData.sort((a,b)=>b.value-a.value)[0].name : 'N/A'} color="text-accent" />
+        <StatItem label="Top Performer" value={pieData.length > 0 ? [...pieData].sort((a,b)=>b.value-a.value)[0].name : 'N/A'} color="text-accent" />
       </div>
 
       {/* History Table */}
