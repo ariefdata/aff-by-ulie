@@ -107,7 +107,7 @@ function FinancialChartsInner({ commissions, accounts = [], affiliateAccounts = 
       let label = 'Other'
       if (affiliateAccounts && c.affiliate_id) {
         const aff = affiliateAccounts.find(a => a.id === c.affiliate_id)
-        if (aff) label = aff.username || aff.email
+        if (aff) label = aff.email
       }
       groups[label] = (groups[label] || 0) + (Number(c.amount) || 0)
     })
@@ -265,7 +265,7 @@ function FinancialChartsInner({ commissions, accounts = [], affiliateAccounts = 
                        </td>
                        <td className="p-4">
                          <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">{affiliateAccounts.find(a => a.id === c.affiliate_id)?.username || affiliateAccounts.find(a => a.id === c.affiliate_id)?.email || 'Unknown'}</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">{affiliateAccounts.find(a => a.id === c.affiliate_id)?.email || 'Unknown'}</span>
                     <CopyButton text={c.affiliate_id} />
                   </div>
                        </td>

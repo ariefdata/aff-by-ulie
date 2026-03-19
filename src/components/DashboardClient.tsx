@@ -54,7 +54,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
   // Form States
   const [newAcc, setNewAcc] = useState({ email: '', username: '', password: '' })
-  const [newAff, setNewAff] = useState({ master_id: '', username: '', email: '', password: '' })
+  const [newAff, setNewAff] = useState({ master_id: '', email: '', password: '' })
   const [newPay, setNewPay] = useState({ master_id: '', name_ktp: '', nik: '', ktp_image_url: '' })
   const [newComm, setNewComm] = useState({ affiliate_id: '', date: new Date().toISOString().split('T')[0], amount: '' })
   const [newSim, setNewSim] = useState({ affiliate_id: '', pay_id: '', phone_number: '', expiry_date: '', has_whatsapp: false })
@@ -169,7 +169,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     }
   }
 
-  const handleCreateAff = () => editingEntity ? handleUpdate('aff', accountService.updateAffiliateAccount, newAff, setAffiliateAccounts as any, () => setNewAff({master_id:'', username:'', email:'', password:''})) : createEntity('aff', accountService.createAffiliateAccount, newAff, setAffiliateAccounts as any, () => setNewAff({master_id:'', username:'', email:'', password:''}))
+  const handleCreateAff = () => editingEntity ? handleUpdate('aff', accountService.updateAffiliateAccount, newAff, setAffiliateAccounts as any, () => setNewAff({master_id:'', email:'', password:''})) : createEntity('aff', accountService.createAffiliateAccount, newAff, setAffiliateAccounts as any, () => setNewAff({master_id:'', email:'', password:''}))
   const handleCreatePay = () => editingEntity ? handleUpdate('pay', accountService.updatePayAccount, newPay, setPayAccounts as any, () => setNewPay({master_id:'', name_ktp:'', nik:'', ktp_image_url:''})) : createEntity('pay', accountService.createPayAccount, newPay, setPayAccounts as any, () => setNewPay({master_id:'', name_ktp:'', nik:'', ktp_image_url:''}))
   const handleCreateId = (e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('id', accountService.updateIdentity, newId, setIdentities as any, () => setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''})) : createEntity('id', accountService.createIdentity, newId, setIdentities as any, () => setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''})) }
   const handleCreateSim = (e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sim', accountService.updateSim, newSim, setSims as any, () => setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) : createEntity('sim', accountService.createSim, newSim, setSims as any, () => setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) }
@@ -259,12 +259,12 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                       {myAffs.length === 0 ? <p className="text-[10px] text-slate-800 italic ml-2">Belum ada unit affiliate</p> : myAffs.map(aff => (
                         <EntityCard
                           key={aff.id}
-                          title={aff.username || aff.email}
+                          title={aff.email}
                           sub="Shopee Affiliate"
                           entityType="acc"
-                          details={{ 'Username': aff.username, 'Email': aff.email }}
+                          details={{ 'Email': aff.email, 'Password': aff.password }}
                           onDelete={() => confirmDelete('Affiliate', () => accountService.deleteAffiliateAccount(aff.id).then(() => setAffiliateAccounts(affiliateAccounts.filter(a => a.id !== aff.id))))}
-                          onEdit={() => { setEditingEntity({type:'aff', id: aff.id}); setNewAff({master_id: aff.master_id, username: aff.username, email: aff.email, password: aff.password}); setModals({...modals, aff: true}) }}
+                          onEdit={() => { setEditingEntity({type:'aff', id: aff.id}); setNewAff({master_id: aff.master_id, email: aff.email, password: aff.password}); setModals({...modals, aff: true}) }}
                         />
                       ))}
                     </div>
@@ -299,7 +299,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
             {sims.map(s => {
               const parentAff = affiliateAccounts.find(a => a.id === s.affiliate_id)
               const parentPay = payAccounts.find(p => p.id === s.pay_id)
-              const parentLabel = parentAff ? `Aff: ${parentAff.username || parentAff.email}` : parentPay ? `Pay: ${parentPay.name_ktp}` : 'No Parent'
+              const parentLabel = parentAff ? `Aff: ${parentAff.email}` : parentPay ? `Pay: ${parentPay.name_ktp}` : 'No Parent'
               return (
                 <EntityCard
                   key={s.id}
@@ -361,7 +361,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
               <div key={group.affiliate.id} className="space-y-4">
                 <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-2xl w-fit">
                   <Users size={14} className="text-accent" />
-                  <span className="text-xs font-bold text-accent uppercase tracking-widest leading-none">{group.affiliate.username || group.affiliate.email}</span>
+                  <span className="text-xs font-bold text-accent uppercase tracking-widest leading-none">{group.affiliate.email}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {group.items.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => confirmDelete('Sample', () => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id))))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({affiliate_id: s.affiliate_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
@@ -613,7 +613,7 @@ function EntityModals({ editingEntity, modals, setModals, accounts, affiliateAcc
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-tighter ml-1 text-accent flex items-center gap-1">Shopee Affiliate *</label>
                 <select value={newComm.affiliate_id} onChange={e => setNewComm({...newComm, affiliate_id: e.target.value})} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent/50 appearance-none cursor-pointer">
                   <option value="" className="bg-slate-900">-- Pilih Akun Affiliate --</option>
-                  {affiliateAccounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.username || a.email}</option>)}
+                  {affiliateAccounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.email}</option>)}
                 </select>
               </div>
               <FormInput label="Tanggal Cair" type="date" value={newComm.date} onChange={(v: string) => setNewComm({...newComm, date: v})} required />
@@ -639,7 +639,6 @@ function EntityModals({ editingEntity, modals, setModals, accounts, affiliateAcc
         <Modal title={editingEntity ? "Edit Akun Affiliate" : "Tambah Akun Affiliate"} onClose={() => setModals({...modals, aff: false})}>
           <form onSubmit={(e) => { e.preventDefault(); handleCreateAff() }} className="space-y-4">
             <AccountSelect accounts={accounts} value={newAff.master_id} onChange={(v: string) => setNewAff({...newAff, master_id: v})} />
-            <FormInput label="Username Affiliate" value={newAff.username} onChange={(v: string) => setNewAff({...newAff, username: v})} required />
             <FormInput label="Email Shopee" value={newAff.email} onChange={(v: string) => setNewAff({...newAff, email: v})} required />
             <FormInput label="Password" type="password" value={newAff.password} onChange={(v: string) => setNewAff({...newAff, password: v})} required />
             <SubmitButton label={editingEntity ? "Simpan" : "Simpan Affiliate"} />
@@ -708,7 +707,7 @@ function EntityModals({ editingEntity, modals, setModals, accounts, affiliateAcc
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-tighter ml-1 text-accent flex items-center gap-1">Shopee Affiliate *</label>
                   <select value={newId.affiliate_id} onChange={e => setNewId({...newId, affiliate_id: e.target.value})} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent/50 appearance-none cursor-pointer">
                     <option value="" className="bg-slate-900">-- Pilih Akun Affiliate --</option>
-                    {affiliateAccounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.username || a.email}</option>)}
+                    {affiliateAccounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.email}</option>)}
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -734,7 +733,7 @@ function EntityModals({ editingEntity, modals, setModals, accounts, affiliateAcc
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-tighter ml-1 text-accent flex items-center gap-1">Shopee Affiliate *</label>
                   <select value={newSample.affiliate_id} onChange={e => setNewSample({...newSample, affiliate_id: e.target.value})} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent/50 appearance-none cursor-pointer">
                     <option value="" className="bg-slate-900">-- Pilih Akun Affiliate --</option>
-                    {affiliateAccounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.username || a.email}</option>)}
+                    {affiliateAccounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.email}</option>)}
                   </select>
                 </div>
                 <FormInput label="Nama Produk" value={newSample.product_name} onChange={(v: string) => setNewSample({...newSample, product_name: v})} required />
