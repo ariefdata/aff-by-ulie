@@ -5,13 +5,13 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Srikandi Elite | Management Control",
-  description: "Elite Affiliate Management System - Dedicated to Shen Won-won.",
+  title: "Aff by Ulie",
+  description: "Elite Affiliate Management System.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Srikandi Elite",
+    title: "Aff by Ulie",
     startupImage: "/logo.png"
   },
   other: {

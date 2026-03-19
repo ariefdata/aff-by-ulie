@@ -33,13 +33,13 @@ export default function LoginPage() {
           <div className="w-24 h-24 mb-6 relative animate-float">
              <Image 
                 src="/logo.png" 
-                alt="Srikandi Elite Logo" 
+                alt="Aff by Ulie Logo" 
                 fill 
                 className="object-contain drop-shadow-[0_10px_15px_rgba(157,23,77,0.2)]"
              />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2 uppercase">
-            Srikandi <span className="text-rose-800">Elite</span>
+            Aff by <span className="text-rose-800">Ulie</span>
           </h1>
           <p className="text-slate-500 text-center text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">
             Professional Affiliate Management

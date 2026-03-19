@@ -49,7 +49,7 @@ export default function FinancialCharts(props: FinancialChartsProps) {
 }
 
 function FinancialChartsInner({ commissions, accounts = [], fullView = false, onEditCommission, onDeleteCommission }: FinancialChartsProps) {
-  const [range, setRange] = useState<Range>('7d')
+  const [range, setRange] = useState<Range>('30d')
   const [customRange, setCustomRange] = useState({ start: '', end: '' })
 
   const filteredCommissions = useMemo(() => {

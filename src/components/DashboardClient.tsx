@@ -179,7 +179,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-accent/20 rounded-2xl text-accent"><Smartphone size={24} /></div>
                   <div>
-                    <h4 className="text-white font-bold">Aplikasi Srikandi Elite</h4>
+                    <h4 className="text-white font-bold">Aplikasi Aff by Ulie</h4>
                     <p className="text-xs text-slate-500">
                       {isIOS ? 'Ketuk "Share" (kotak panah) lalu "Add to Home Screen"' : 'Instal aplikasi untuk akses lebih cepat & mudah.'}
                     </p>
@@ -319,7 +319,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       <aside className="hidden md:flex w-64 flex-col glass border-r border-white/10 p-6 fixed h-full z-20">
         <div className="flex items-center gap-3 mb-12">
           <Image src="/logo.png" alt="Logo" width={40} height={40} className="accent-glow rounded-xl" />
-          <h2 className="text-xl font-bold text-white tracking-tight uppercase">Srikandi Elite</h2>
+          <h2 className="text-xl font-bold text-white tracking-tight uppercase">Aff by Ulie</h2>
         </div>
         <nav className="flex-1 space-y-1">
           <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />

@@ -28,7 +28,7 @@ serwist.addEventListeners();
 // Push Notification Listener
 (self as any).addEventListener('push', (event: any) => {
   const data = event.data?.json() ?? {};
-  const title = data.title ?? 'Srikandi Elite notification';
+  const title = data.title ?? 'Aff by Ulie notification';
   const options = {
     body: data.body ?? 'Update baru tersedia.',
     icon: '/logo.png',
