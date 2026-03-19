@@ -355,7 +355,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
               <div key={group.account.id} className="space-y-4">
                 <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-2xl w-fit">
                   <Users size={14} className="text-accent" />
-                  <span className="text-xs font-bold text-accent uppercase tracking-widest leading-none">{group.account.username}</span>
+                  <span className="text-xs font-bold text-accent uppercase tracking-widest leading-none">{group.account.email}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {group.items.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => confirmDelete('Sample', () => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id))))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
@@ -605,7 +605,7 @@ function EntityModals({ editingEntity, modals, setModals, accounts, affiliateAcc
              <div className="space-y-4">
             <select value={newComm.account_id} onChange={e => setNewComm({...newComm, account_id: e.target.value})} required className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-accent">
               <option value="" className="bg-slate-900">Pilih Akun Shopee</option>
-              {accounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.username}</option>)}
+              {accounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.email}</option>)}
             </select>
             <div className="space-y-1">
               <label className="text-[10px] text-slate-500 font-bold uppercase ml-2">Tanggal Cair</label>
@@ -756,7 +756,7 @@ function AccountSelect({ accounts, value, onChange }: { accounts: ShopeeAccount[
       <label className="text-xs font-bold text-slate-400 uppercase tracking-tighter ml-1 text-accent flex items-center gap-1"><Users size={12} /> Pilih Akun Parent *</label>
       <select value={value} onChange={e => onChange(e.target.value)} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent/50 transition-all appearance-none cursor-pointer">
         <option value="" className="bg-slate-900">-- Pilih Akun --</option>
-        {accounts.map(acc => <option key={acc.id} value={acc.id} className="bg-slate-900">{acc.username}</option>)}
+        {accounts.map(acc => <option key={acc.id} value={acc.id} className="bg-slate-900">{acc.email}</option>)}
       </select>
     </div>
   )
