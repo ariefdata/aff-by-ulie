@@ -67,6 +67,7 @@ export interface Commission {
   id: string
   user_id: string
   affiliate_id: string
+  account_id?: string
   date: string
   amount: number
   created_at: string

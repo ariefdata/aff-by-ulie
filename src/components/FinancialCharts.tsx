@@ -105,9 +105,14 @@ function FinancialChartsInner({ commissions, accounts = [], affiliateAccounts = 
     const groups: { [key: string]: number } = {}
     filteredCommissions.forEach(c => {
       let label = 'Other'
-      if (affiliateAccounts && c.affiliate_id) {
-        const aff = affiliateAccounts.find(a => a.id === c.affiliate_id)
-        if (aff) label = aff.email
+      if (c.affiliate_id || c.account_id) {
+        const aff = affiliateAccounts.find(a => a.id === (c.affiliate_id || c.account_id))
+        if (aff) {
+          label = aff.email
+        } else {
+          const acc = accounts.find(a => a.id === (c.affiliate_id || c.account_id))
+          if (acc) label = acc.username || acc.email
+        }
       }
       groups[label] = (groups[label] || 0) + (Number(c.amount) || 0)
     })
@@ -265,8 +270,17 @@ function FinancialChartsInner({ commissions, accounts = [], affiliateAccounts = 
                        </td>
                        <td className="p-4">
                          <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">{affiliateAccounts.find(a => a.id === c.affiliate_id)?.email || 'Unknown'}</span>
-                    <CopyButton text={c.affiliate_id} />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">
+                      {(() => {
+                        const id = c.affiliate_id || c.account_id
+                        const aff = affiliateAccounts.find(a => a.id === id)
+                        if (aff) return aff.email
+                        const acc = accounts.find(a => a.id === id)
+                        if (acc) return acc.username || acc.email
+                        return 'Unknown'
+                      })()}
+                    </span>
+                    <CopyButton text={c.affiliate_id || c.account_id || ''} />
                   </div>
                        </td>
                        <td className="p-4 font-bold text-rose-500">
