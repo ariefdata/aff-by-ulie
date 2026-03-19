@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, Users, Smartphone, Package, 
   TrendingUp, Settings, LogOut, Plus, Copy, 
-  Check, AlertTriangle, X, Search, Trash2, Edit, CreditCard, ChevronRight, Target, FileText
+  Check, AlertTriangle, X, Search, Trash2, Edit, FileText, Calendar
 } from 'lucide-react'
 import Image from 'next/image'
 import { 
   ShopeeAccount, Identity, Sim, Sample, Commission, 
   accountService 
 } from '@/services/accountService'
-import { getSimStatus } from '@/utils/simLogic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -40,13 +39,13 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   
   const [activeView, setActiveView] = useState<View>('DASHBOARD')
   const [isPushEnabled, setIsPushEnabled] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Modals Visibility
   const [modals, setModals] = useState({
     acc: false, comm: false, sim: false, id: false, sample: false
   })
+  const [editingEntity, setEditingEntity] = useState<{ type: keyof typeof modals, id: string } | null>(null)
 
   // Form States
   const [newAcc, setNewAcc] = useState({ username: '', email: '', password: '' })
@@ -73,8 +72,6 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       setLoading(false)
     }
     fetchData()
-    
-    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches)
     pushService.getSubscription().then(sub => setIsPushEnabled(!!sub))
   }, [])
 
@@ -103,6 +100,19 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     }
   }
 
+  const handleUpdate = async (type: keyof typeof modals, updateMethod: (id: string, data: any) => Promise<any>, payload: any, setState: React.Dispatch<React.SetStateAction<any[]>>, resetState: () => void) => {
+    if (!editingEntity) return
+    try {
+      const updated = await updateMethod(editingEntity.id, payload)
+      setState(prev => prev.map(item => item.id === updated.id ? updated : item))
+      setModals({...modals, [type]: false})
+      setEditingEntity(null)
+      resetState()
+    } catch (e: any) {
+      alert(`Gagal update: ${e.message}`)
+    }
+  }
+
   // View Renderers
   const renderContent = () => {
     if (loading) return <LoadingPulse />
@@ -110,60 +120,60 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     switch (activeView) {
       case 'DASHBOARD': return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-             <StatCard label="Total Komisi" value={`Rp ${commissions.reduce((acc, c) => acc + (Number(c.amount) || 0), 0).toLocaleString()}`} sub="Life-time" color="text-green-400" />
-             <StatCard label="Total Sampel" value={samples.length.toString()} sub="Logistik" color="text-amber-400" />
-             <StatCard label="Akun Aktif" value={accounts.length.toString()} sub="Shopee Asset" color="text-rose-400" />
-             <StatCard label="SIM Warning" value={sims.filter(s => getSimStatus(s.expiry_date).alert).length.toString()} sub="Attention Req" color="text-red-400" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+             <StatCard label="Shopee Assets" value={accounts.length.toString()} sub="Active Stores" />
+             <StatCard label="Total Commission" value={`Rp ${commissions.reduce((s,c)=>s+Number(c.amount),0).toLocaleString()}`} sub="All Time Verified" color="text-accent" />
+             <StatCard label="Active SIMs" value={sims.length.toString()} sub="Management" />
+             <StatCard label="Identity KYC" value={identities.length.toString()} sub="Profiles" />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <FinancialCharts commissions={commissions} />
-            <SampleTracker samples={samples} />
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2"><FinancialCharts commissions={commissions} accounts={accounts} /></div>
+            <div><SampleTracker samples={samples} /></div>
           </div>
-          <section className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white uppercase tracking-tight flex items-center gap-2"><TrendingUp size={20} className="text-accent" /> Recent Assets</h3>
-              <button onClick={() => setActiveView('ACCOUNTS')} className="text-xs font-black text-accent uppercase tracking-widest hover:brightness-125 transition-all">Lihat Semua</button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {accounts.slice(0, 4).map(acc => <AccountSimpleCard key={acc.id} account={acc} onCopy={handleCopy} copiedId={copiedId} />)}
-            </div>
-          </section>
         </div>
       )
       case 'ACCOUNTS': return (
         <div className="space-y-6">
-          <SectionHeader title="Daftar Akun Shopee" sub="Kelola kredensial dan aset utama Anda." onAdd={() => setModals({...modals, acc: true})} />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {accounts.map(acc => <AccountSimpleCard key={acc.id} account={acc} onCopy={handleCopy} copiedId={copiedId} onDelete={async (id) => { if(confirm('Hapus?')) { await accountService.deleteAccount(id); setAccounts(accounts.filter(a => a.id !== id)) } }} />)}
+          <SectionHeader title="Shopee Manager" sub="Credential & Store Assets" onAdd={() => { setEditingEntity(null); setNewAcc({username:'',email:'',password:''}); setModals({...modals, acc: true})}} />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {accounts.map(acc => (
+              <AccountSimpleCard 
+                key={acc.id} 
+                account={acc} 
+                onCopy={handleCopy} 
+                copiedId={copiedId} 
+                onDelete={() => accountService.deleteAccount(acc.id).then(() => setAccounts(accounts.filter(a => a.id !== acc.id)))}
+                onEdit={() => { setEditingEntity({type: 'acc', id: acc.id}); setNewAcc({username: acc.username, email: acc.email, password: acc.password}); setModals({...modals, acc: true}) }}
+              />
+            ))}
           </div>
         </div>
       )
       case 'SIMS': return (
         <div className="space-y-6">
-          <SectionHeader title="SIM Lifecycle" sub="Monitor masa aktif dan WhatsApp." onAdd={() => setModals({...modals, sim: true})} />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {sims.map(sim => <EntityCard key={sim.id} title={sim.phone_number} sub={accounts.find(a => a.id === sim.account_id)?.username || 'Orphan'} status={getSimStatus(sim.expiry_date)} onDelete={() => accountService.deleteSim(sim.id).then(() => setSims(sims.filter(s => s.id !== sim.id)))} />)}
+          <SectionHeader title="SIM Lifecycle" sub="Active Numbers & WhatsApp Sync" onAdd={() => { setEditingEntity(null); setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false}); setModals({...modals, sim: true})}} />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sims.map(s => <EntityCard key={s.id} title={s.phone_number} sub={accounts.find(a=>a.id===s.account_id)?.username || 'Unknown'} extra={s.expiry_date} onDelete={() => accountService.deleteSim(s.id).then(() => setSims(sims.filter(i => i.id !== s.id)))} onEdit={() => { setEditingEntity({type:'sim', id: s.id}); setNewSim({account_id: s.account_id, phone_number: s.phone_number, expiry_date: s.expiry_date, has_whatsapp: s.has_whatsapp}); setModals({...modals, sim: true}) }} />)}
           </div>
         </div>
       )
       case 'IDENTITY': return (
         <div className="space-y-6">
-          <SectionHeader title="Identity Profiles" sub="Data KYC dan Rekening Bank." onAdd={() => setModals({...modals, id: true})} />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {identities.map(id => <EntityCard key={id.id} title={id.name_ktp} sub={id.nik} extra={accounts.find(a => a.id === id.account_id)?.username} onDelete={() => accountService.deleteIdentity(id.id).then(() => setIdentities(identities.filter(i => i.id !== id.id)))} />)}
+          <SectionHeader title="KYC Profiles" sub="KTP, NPWP & Bank Accounts" onAdd={() => { setEditingEntity(null); setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''}); setModals({...modals, id: true})}} />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {identities.map(i => <EntityCard key={i.id} title={i.name_ktp} sub={accounts.find(a=>a.id===i.account_id)?.username || 'Unknown'} extra={i.bank_name} onDelete={() => accountService.deleteIdentity(i.id).then(() => setIdentities(identities.filter(idx => idx.id !== i.id)))} onEdit={() => { setEditingEntity({type:'id', id: i.id}); setNewId({account_id: i.account_id, nik: i.nik, name_ktp: i.name_ktp, npwp: i.npwp, bank_name: i.bank_name, bank_acc: i.bank_acc, address: i.address}); setModals({...modals, id: true}) }} />)}
           </div>
         </div>
       )
       case 'SAMPLES': return (
         <div className="space-y-6">
-          <SectionHeader title="Sampel Logistik" sub="Tracker barang dan review." onAdd={() => setModals({...modals, sample: true})} />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {samples.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id)))} />)}
+          <SectionHeader title="Sample Logistics" sub="Product Requests & Tracking" onAdd={() => { setEditingEntity(null); setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''}); setModals({...modals, sample: true})}} />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {samples.map(s => <EntityCard key={s.id} title={s.product_name} sub={s.brand_name} extra={s.shop_name} onDelete={() => accountService.deleteSample(s.id).then(() => setSamples(samples.filter(i => i.id !== s.id)))} onEdit={() => { setEditingEntity({type:'sample', id: s.id}); setNewSample({account_id: s.account_id, product_name: s.product_name, shop_name: s.shop_name, brand_name: s.brand_name}); setModals({...modals, sample: true}) }} />)}
           </div>
         </div>
       )
-      case 'ANALYTICS': return <div className="max-w-6xl mx-auto"><FinancialCharts commissions={commissions} fullView /></div>
+      case 'ANALYTICS': return <div className="max-w-6xl mx-auto"><FinancialCharts commissions={commissions} accounts={accounts} fullView /></div>
       case 'SETTINGS': return <SettingsView user={initialUser} onLogout={handleLogout} onPushToggle={() => {}} isPushEnabled={isPushEnabled} />
       default: return null
     }
@@ -171,7 +181,6 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
   return (
     <div className="flex min-h-screen bg-slate-950">
-      {/* Sidebar - Desktop */}
       <aside className="hidden md:flex w-64 flex-col glass border-r border-white/10 p-6 fixed h-full z-20">
         <div className="flex items-center gap-3 mb-12">
           <Image src="/logo.png" alt="Logo" width={40} height={40} className="accent-glow rounded-xl" />
@@ -192,17 +201,15 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
         <header className="flex justify-between items-center mb-8 sticky top-0 bg-slate-950/80 backdrop-blur-xl py-4 z-30">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">{activeView}</h1>
-            <p className="text-[10px] text-slate-700 font-black tracking-[0.5em] uppercase">Dedicated to Shen Won-won</p>
+            <p className="text-[10px] text-slate-700 font-black tracking-[0.5em] uppercase">Relational Overhaul V1</p>
           </div>
-          <button onClick={() => setModals({...modals, comm: true})} className="p-4 bg-accent rounded-2xl text-primary shadow-xl accent-glow active:scale-95 transition-all">
+          <button onClick={() => { setEditingEntity(null); setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0}); setModals({...modals, comm: true})}} className="p-4 bg-accent rounded-2xl text-primary shadow-xl accent-glow active:scale-95 transition-all">
             <Plus size={24} strokeWidth={3} />
           </button>
         </header>
-
         {renderContent()}
       </main>
 
-      {/* Mobile Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-2 flex justify-between items-center z-40 bg-slate-950/80 backdrop-blur-xl">
          <MobileNavItem icon={<LayoutDashboard size={20} />} label="Dash" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
          <MobileNavItem icon={<Users size={20} />} label="Acc" active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
@@ -212,20 +219,18 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       </nav>
 
       <EntityModals 
-        modals={modals} 
-        setModals={setModals} 
-        accounts={accounts}
-        newAcc={newAcc} setNewAcc={setNewAcc}        handleCreateAcc={() => createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''}))}
-        newComm={newComm} setNewComm={setNewComm} handleCreateComm={(e: React.FormEvent) => { e.preventDefault(); createEntity('comm', accountService.createCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0})) }}
-        newSim={newSim} setNewSim={setNewSim} handleCreateSim={(e: React.FormEvent) => { e.preventDefault(); createEntity('sim', accountService.createSim, newSim, setSims as any, () => setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) }}
-        newId={newId} setNewId={setNewId} handleCreateId={(e: React.FormEvent) => { e.preventDefault(); createEntity('id', accountService.createIdentity, newId, setIdentities as any, () => setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''})) }}
-        newSample={newSample} setNewSample={setNewSample} handleCreateSample={(e: React.FormEvent) => { e.preventDefault(); createEntity('sample', accountService.createSample, newSample, setSamples as any, () => setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''})) }}
+        editingEntity={editingEntity} modals={modals} setModals={setModals} accounts={accounts}
+        newAcc={newAcc} setNewAcc={setNewAcc} handleCreateAcc={() => editingEntity ? handleUpdate('acc', accountService.updateAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''})) : createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''}))}
+        newComm={newComm} setNewComm={setNewComm} handleCreateComm={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('comm', accountService.updateCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0})) : createEntity('comm', accountService.createCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', start_date: new Date().toISOString().split('T')[0], end_date: new Date().toISOString().split('T')[0], amount: 0})) }}
+        newSim={newSim} setNewSim={setNewSim} handleCreateSim={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sim', accountService.updateSim, newSim, setSims as any, () => setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) : createEntity('sim', accountService.createSim, newSim, setSims as any, () => setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) }}
+        newId={newId} setNewId={setNewId} handleCreateId={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('id', accountService.updateIdentity, newId, setIdentities as any, () => setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''})) : createEntity('id', accountService.createIdentity, newId, setIdentities as any, () => setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''})) }}
+        newSample={newSample} setNewSample={setNewSample} handleCreateSample={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sample', accountService.updateSample, newSample, setSamples as any, () => setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''})) : createEntity('sample', accountService.createSample, newSample, setSamples as any, () => setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''})) }}
       />
     </div>
   )
 }
 
-// Sub-Components
+// UI Elements
 function SectionHeader({ title, sub, onAdd }: { title: string, sub: string, onAdd: () => void }) {
   return (
     <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-[2rem] border border-white/5">
@@ -235,12 +240,15 @@ function SectionHeader({ title, sub, onAdd }: { title: string, sub: string, onAd
   )
 }
 
-function AccountSimpleCard({ account, onCopy, copiedId, onDelete }: { account: ShopeeAccount, onCopy: (t: string, id: string) => void, copiedId: string | null, onDelete?: (id: string) => void }) {
+function AccountSimpleCard({ account, onCopy, copiedId, onDelete, onEdit }: { account: ShopeeAccount, onCopy: (t: string, id: string) => void, copiedId: string | null, onDelete?: (id: string) => void, onEdit: () => void }) {
   return (
     <div className="glass p-5 rounded-3xl border border-white/5 hover:border-accent/30 transition-all group relative">
       <div className="flex justify-between items-start mb-4">
         <div><h4 className="text-lg font-bold text-white">{account.username}</h4><p className="text-[10px] text-slate-500 font-mono italic">Shopee Asset</p></div>
-        {onDelete && <button onClick={() => onDelete(account.id)} className="p-2 text-slate-700 hover:text-rose-500 transition-colors"><Trash2 size={16} /></button>}
+        <div className="flex gap-1">
+          <button onClick={onEdit} className="p-2 text-slate-700 hover:text-accent transition-colors"><Edit size={16} /></button>
+          {onDelete && <button onClick={() => onDelete(account.id)} className="p-2 text-slate-700 hover:text-rose-500 transition-colors"><Trash2 size={16} /></button>}
+        </div>
       </div>
       <div className="space-y-3">
         <CredentialBox label="User/Email" val={account.email} onCopy={() => onCopy(account.email, account.id + 'e')} isCopied={copiedId === account.id + 'e'} />
@@ -250,12 +258,15 @@ function AccountSimpleCard({ account, onCopy, copiedId, onDelete }: { account: S
   )
 }
 
-function EntityCard({ title, sub, extra, status, onDelete }: { title: string, sub: string, extra?: string, status?: any, onDelete: () => void }) {
+function EntityCard({ title, sub, extra, status, onDelete, onEdit }: { title: string, sub: string, extra?: string, status?: any, onDelete: () => void, onEdit: () => void }) {
   return (
     <div className="glass p-5 rounded-3xl border border-white/5 hover:border-white/10 transition-all group">
       <div className="flex justify-between items-start mb-2">
         <h4 className="text-lg font-bold text-white truncate">{title}</h4>
-        <button onClick={onDelete} className="p-1.5 text-slate-800 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+          <button onClick={onEdit} className="p-1.5 text-slate-800 hover:text-accent"><Edit size={14} /></button>
+          <button onClick={onDelete} className="p-1.5 text-slate-800 hover:text-rose-500"><Trash2 size={14} /></button>
+        </div>
       </div>
       <p className="text-xs text-slate-500 mb-1">{sub}</p>
       {extra && <p className="text-[10px] text-accent font-black uppercase tracking-widest">{extra}</p>}
@@ -277,7 +288,7 @@ function CredentialBox({ label, val, onCopy, isCopied }: { label: string, val: s
 }
 
 interface EntityModalProps {
-  modals: any; setModals: any; accounts: ShopeeAccount[];
+  editingEntity: any; modals: any; setModals: any; accounts: ShopeeAccount[];
   newAcc: any; setNewAcc: any; handleCreateAcc: () => void;
   newComm: any; setNewComm: any; handleCreateComm: (e: React.FormEvent) => void;
   newSim: any; setNewSim: any; handleCreateSim: (e: React.FormEvent) => void;
@@ -285,12 +296,11 @@ interface EntityModalProps {
   newSample: any; setNewSample: any; handleCreateSample: (e: React.FormEvent) => void;
 }
 
-function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCreateAcc, newComm, setNewComm, handleCreateComm, newSim, setNewSim, handleCreateSim, newId, setNewId, handleCreateId, newSample, setNewSample, handleCreateSample }: EntityModalProps) {
+function EntityModals({ editingEntity, modals, setModals, accounts, newAcc, setNewAcc, handleCreateAcc, newComm, setNewComm, handleCreateComm, newSim, setNewSim, handleCreateSim, newId, setNewId, handleCreateId, newSample, setNewSample, handleCreateSample }: EntityModalProps) {
   return (
     <AnimatePresence>
-      {/* Commission Modal (Primary +) */}
       {modals.comm && (
-        <Modal title="Catat Komisi Harian" onClose={() => setModals({...modals, comm: false})}>
+        <Modal title={editingEntity ? "Edit Komisi" : "Catat Komisi Harian"} onClose={() => setModals({...modals, comm: false})}>
           <form onSubmit={handleCreateComm} className="space-y-4">
              <AccountSelect accounts={accounts} value={newComm.account_id} onChange={(v: string) => setNewComm({...newComm, account_id: v})} />
              <div className="grid grid-cols-2 gap-4">
@@ -298,26 +308,24 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
                <FormInput label="Sampai Tanggal" type="date" value={newComm.end_date} onChange={(v: string) => setNewComm({...newComm, end_date: v})} required />
              </div>
              <FormInput label="Besar Komisi (Rp)" type="number" value={newComm.amount.toString()} onChange={(v: string) => setNewComm({...newComm, amount: parseFloat(v) || 0})} required />
-             <SubmitButton label="Simpan Komisi" />
+             <SubmitButton label={editingEntity ? "Simpan Perubahan" : "Simpan Komisi"} />
           </form>
         </Modal>
       )}
 
-      {/* Shopee Account Modal */}
       {modals.acc && (
-        <Modal title="Tambah Akun Shopee" onClose={() => setModals({...modals, acc: false})}>
+        <Modal title={editingEntity ? "Edit Akun Master" : "Tambah Akun Shopee"} onClose={() => setModals({...modals, acc: false})}>
           <form onSubmit={(e) => { e.preventDefault(); handleCreateAcc() }} className="space-y-4">
             <FormInput label="Username Shopee" value={newAcc.username} onChange={(v: string) => setNewAcc({...newAcc, username: v})} required />
             <FormInput label="Email Terkait" value={newAcc.email} onChange={(v: string) => setNewAcc({...newAcc, email: v})} required />
             <FormInput label="Password" type="password" value={newAcc.password} onChange={(v: string) => setNewAcc({...newAcc, password: v})} required />
-            <SubmitButton label="Simpan Akun Master" />
+            <SubmitButton label={editingEntity ? "Simpan Perubahan" : "Simpan Akun Master"} />
           </form>
         </Modal>
       )}
 
-      {/* SIM Modal */}
       {modals.sim && (
-        <Modal title="Tambah Data SIM" onClose={() => setModals({...modals, sim: false})}>
+        <Modal title={editingEntity ? "Edit Data SIM" : "Tambah Data SIM"} onClose={() => setModals({...modals, sim: false})}>
           <form onSubmit={handleCreateSim} className="space-y-4">
              <AccountSelect accounts={accounts} value={newSim.account_id} onChange={(v: string) => setNewSim({...newSim, account_id: v})} />
              <FormInput label="Nomor Telepon" value={newSim.phone_number} onChange={(v: string) => setNewSim({...newSim, phone_number: v})} required />
@@ -326,14 +334,13 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
                 <input type="checkbox" checked={newSim.has_whatsapp} onChange={(e) => setNewSim({...newSim, has_whatsapp: e.target.checked})} className="w-5 h-5 rounded accent-rose-500" />
                 <span className="text-sm text-slate-300 font-bold">Terdaftar WhatsApp</span>
              </div>
-             <SubmitButton label="Save SIM" />
+             <SubmitButton label={editingEntity ? "Update SIM" : "Save SIM"} />
           </form>
         </Modal>
       )}
 
-      {/* Identity Modal */}
       {modals.id && (
-        <Modal title="Lengkapi Identitas (KYC)" onClose={() => setModals({...modals, id: false})}>
+        <Modal title={editingEntity ? "Edit Profile KYC" : "Lengkapi Identitas (KYC)"} onClose={() => setModals({...modals, id: false})}>
           <form onSubmit={handleCreateId} className="space-y-4 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
              <AccountSelect accounts={accounts} value={newId.account_id} onChange={(v: string) => setNewId({...newId, account_id: v})} />
              <div className="grid grid-cols-2 gap-4">
@@ -344,14 +351,13 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
              </div>
              <FormInput label="Nomor Rekening" value={newId.bank_acc} onChange={(v: string) => setNewId({...newId, bank_acc: v})} required />
              <FormInput label="Alamat Sesuai KTP" value={newId.address} onChange={(v: string) => setNewId({...newId, address: v})} />
-             <SubmitButton label="Simpan Profile" />
+             <SubmitButton label={editingEntity ? "Update Profile" : "Simpan Profile"} />
           </form>
         </Modal>
       )}
 
-      {/* Sample Modal */}
       {modals.sample && (
-        <Modal title="Request Sampel Baru" onClose={() => setModals({...modals, sample: false})}>
+        <Modal title={editingEntity ? "Edit Request Sampel" : "Request Sampel Baru"} onClose={() => setModals({...modals, sample: false})}>
           <form onSubmit={handleCreateSample} className="space-y-4">
              <AccountSelect accounts={accounts} value={newSample.account_id} onChange={(v: string) => setNewSample({...newSample, account_id: v})} />
              <FormInput label="Nama Produk" value={newSample.product_name} onChange={(v: string) => setNewSample({...newSample, product_name: v})} required />
@@ -359,7 +365,7 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
                 <FormInput label="Shop Name" value={newSample.shop_name} onChange={(v: string) => setNewSample({...newSample, shop_name: v})} required />
                 <FormInput label="Brand" value={newSample.brand_name} onChange={(v: string) => setNewSample({...newSample, brand_name: v})} required />
              </div>
-             <SubmitButton label="Record Request" />
+             <SubmitButton label={editingEntity ? "Update Record" : "Record Request"} />
           </form>
         </Modal>
       )}
@@ -367,7 +373,6 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
   )
 }
 
-// UI Elements
 function Modal({ title, children, onClose }: { title: string, children: React.ReactNode, onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -400,7 +405,7 @@ function FormInput({ label, value, onChange, type = 'text', required = false, pl
   return (
     <div className="space-y-1.5">
       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{label} {required && <span className="text-rose-500">*</span>}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required} placeholder={placeholder} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all placeholder:text-slate-700" />
+      <input type={type} min="0" value={value} onChange={(e) => onChange(e.target.value)} required={required} placeholder={placeholder} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all placeholder:text-slate-700" />
     </div>
   )
 }
