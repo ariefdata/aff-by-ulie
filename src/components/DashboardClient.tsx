@@ -82,10 +82,16 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login') }
   const handleCopy = (text: string, id: string) => { navigator.clipboard.writeText(text); setCopiedId(id); setTimeout(() => setCopiedId(null), 2000) }
 
-  const createEntity = async (type: keyof typeof modals, serviceMethod: any, state: any, setState: any, resetState: any) => {
+  const createEntity = async (
+    type: keyof typeof modals, 
+    serviceMethod: (data: any) => Promise<any>, 
+    state: any, 
+    setState: (data: any[]) => void, 
+    resetState: () => void
+  ) => {
     try {
       const added = await serviceMethod(state)
-      setState([added, ...accounts]) // Note: This is simplified, usually we update the specific list
+      setState([added, ...accounts]) // Note: This is simplified
       setModals({...modals, [type]: false})
       resetState()
     } catch (e) { alert('Gagal menyimpan data.') }
@@ -194,7 +200,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-2 flex justify-between items-center z-40 bg-slate-950/80 backdrop-blur-xl">
          <MobileNavItem icon={<LayoutDashboard size={20} />} label="Dash" active={activeView === 'DASHBOARD'} onClick={() => setActiveView('DASHBOARD')} />
          <MobileNavItem icon={<Users size={20} />} label="Acc" active={activeView === 'ACCOUNTS'} onClick={() => setActiveView('ACCOUNTS')} />
-         <MobileNavItem icon={<smartphone size={20} />} label="SIM" active={activeView === 'SIMS'} onClick={() => setActiveView('SIMS')} />
+         <MobileNavItem icon={<Smartphone size={20} />} label="SIM" active={activeView === 'SIMS'} onClick={() => setActiveView('SIMS')} />
          <MobileNavItem icon={<Package size={20} />} label="Samp" active={activeView === 'SAMPLES'} onClick={() => setActiveView('SAMPLES')} />
          <MobileNavItem icon={<TrendingUp size={20} />} label="Stats" active={activeView === 'ANALYTICS'} onClick={() => setActiveView('ANALYTICS')} />
       </nav>
@@ -264,19 +270,28 @@ function CredentialBox({ label, val, onCopy, isCopied }: { label: string, val: s
   )
 }
 
-function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCreateAcc, newComm, setNewComm, handleCreateComm, newSim, setNewSim, handleCreateSim, newId, setNewId, handleCreateId, newSample, setNewSample, handleCreateSample }: any) {
+interface EntityModalProps {
+  modals: any; setModals: any; accounts: ShopeeAccount[];
+  newAcc: any; setNewAcc: any; handleCreateAcc: () => void;
+  newComm: any; setNewComm: any; handleCreateComm: (e: React.FormEvent) => void;
+  newSim: any; setNewSim: any; handleCreateSim: (e: React.FormEvent) => void;
+  newId: any; setNewId: any; handleCreateId: (e: React.FormEvent) => void;
+  newSample: any; setNewSample: any; handleCreateSample: (e: React.FormEvent) => void;
+}
+
+function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCreateAcc, newComm, setNewComm, handleCreateComm, newSim, setNewSim, handleCreateSim, newId, setNewId, handleCreateId, newSample, setNewSample, handleCreateSample }: EntityModalProps) {
   return (
     <AnimatePresence>
       {/* Commission Modal (Primary +) */}
       {modals.comm && (
         <Modal title="Catat Komisi Harian" onClose={() => setModals({...modals, comm: false})}>
           <form onSubmit={handleCreateComm} className="space-y-4">
-             <AccountSelect accounts={accounts} value={newComm.account_id} onChange={(v) => setNewComm({...newComm, account_id: v})} />
+             <AccountSelect accounts={accounts} value={newComm.account_id} onChange={(v: string) => setNewComm({...newComm, account_id: v})} />
              <div className="grid grid-cols-2 gap-4">
-               <FormInput label="Mulai Tanggal" type="date" value={newComm.start_date} onChange={(v) => setNewComm({...newComm, start_date: v})} required />
-               <FormInput label="Sampai Tanggal" type="date" value={newComm.end_date} onChange={(v) => setNewComm({...newComm, end_date: v})} required />
+               <FormInput label="Mulai Tanggal" type="date" value={newComm.start_date} onChange={(v: string) => setNewComm({...newComm, start_date: v})} required />
+               <FormInput label="Sampai Tanggal" type="date" value={newComm.end_date} onChange={(v: string) => setNewComm({...newComm, end_date: v})} required />
              </div>
-             <FormInput label="Besar Komisi (Rp)" type="number" value={newComm.amount.toString()} onChange={(v) => setNewComm({...newComm, amount: parseFloat(v) || 0})} required />
+             <FormInput label="Besar Komisi (Rp)" type="number" value={newComm.amount.toString()} onChange={(v: string) => setNewComm({...newComm, amount: parseFloat(v) || 0})} required />
              <SubmitButton label="Simpan Komisi" />
           </form>
         </Modal>
@@ -286,9 +301,9 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
       {modals.acc && (
         <Modal title="Tambah Akun Shopee" onClose={() => setModals({...modals, acc: false})}>
           <form onSubmit={(e) => { e.preventDefault(); handleCreateAcc() }} className="space-y-4">
-            <FormInput label="Username Shopee" value={newAcc.username} onChange={(v) => setNewAcc({...newAcc, username: v})} required />
-            <FormInput label="Email Terkait" value={newAcc.email} onChange={(v) => setNewAcc({...newAcc, email: v})} required />
-            <FormInput label="Password" type="password" value={newAcc.password} onChange={(v) => setNewAcc({...newAcc, password: v})} required />
+            <FormInput label="Username Shopee" value={newAcc.username} onChange={(v: string) => setNewAcc({...newAcc, username: v})} required />
+            <FormInput label="Email Terkait" value={newAcc.email} onChange={(v: string) => setNewAcc({...newAcc, email: v})} required />
+            <FormInput label="Password" type="password" value={newAcc.password} onChange={(v: string) => setNewAcc({...newAcc, password: v})} required />
             <SubmitButton label="Simpan Akun Master" />
           </form>
         </Modal>
@@ -298,9 +313,9 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
       {modals.sim && (
         <Modal title="Tambah Data SIM" onClose={() => setModals({...modals, sim: false})}>
           <form onSubmit={handleCreateSim} className="space-y-4">
-             <AccountSelect accounts={accounts} value={newSim.account_id} onChange={(v) => setNewSim({...newSim, account_id: v})} />
-             <FormInput label="Nomor Telepon" value={newSim.phone_number} onChange={(v) => setNewSim({...newSim, phone_number: v})} required />
-             <FormInput label="Masa Aktif" type="date" value={newSim.expiry_date} onChange={(v) => setNewSim({...newSim, expiry_date: v})} required />
+             <AccountSelect accounts={accounts} value={newSim.account_id} onChange={(v: string) => setNewSim({...newSim, account_id: v})} />
+             <FormInput label="Nomor Telepon" value={newSim.phone_number} onChange={(v: string) => setNewSim({...newSim, phone_number: v})} required />
+             <FormInput label="Masa Aktif" type="date" value={newSim.expiry_date} onChange={(v: string) => setNewSim({...newSim, expiry_date: v})} required />
              <div className="flex items-center gap-3 p-4 glass rounded-2xl border border-white/5">
                 <input type="checkbox" checked={newSim.has_whatsapp} onChange={(e) => setNewSim({...newSim, has_whatsapp: e.target.checked})} className="w-5 h-5 rounded accent-rose-500" />
                 <span className="text-sm text-slate-300 font-bold">Terdaftar WhatsApp</span>
@@ -314,15 +329,15 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
       {modals.id && (
         <Modal title="Lengkapi Identitas (KYC)" onClose={() => setModals({...modals, id: false})}>
           <form onSubmit={handleCreateId} className="space-y-4 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
-             <AccountSelect accounts={accounts} value={newId.account_id} onChange={(v) => setNewId({...newId, account_id: v})} />
+             <AccountSelect accounts={accounts} value={newId.account_id} onChange={(v: string) => setNewId({...newId, account_id: v})} />
              <div className="grid grid-cols-2 gap-4">
-                <FormInput label="NIK (KTP)" value={newId.nik} onChange={(v) => setNewId({...newId, nik: v})} required />
-                <FormInput label="Nama Lengkap" value={newId.name_ktp} onChange={(v) => setNewId({...newId, name_ktp: v})} required />
-                <FormInput label="NPWP" value={newId.npwp} onChange={(v) => setNewId({...newId, npwp: v})} />
-                <FormInput label="Bank" value={newId.bank_name} onChange={(v) => setNewId({...newId, bank_name: v})} required />
+                <FormInput label="NIK (KTP)" value={newId.nik} onChange={(v: string) => setNewId({...newId, nik: v})} required />
+                <FormInput label="Nama Lengkap" value={newId.name_ktp} onChange={(v: string) => setNewId({...newId, name_ktp: v})} required />
+                <FormInput label="NPWP" value={newId.npwp} onChange={(v: string) => setNewId({...newId, npwp: v})} />
+                <FormInput label="Bank" value={newId.bank_name} onChange={(v: string) => setNewId({...newId, bank_name: v})} required />
              </div>
-             <FormInput label="Nomor Rekening" value={newId.bank_acc} onChange={(v) => setNewId({...newId, bank_acc: v})} required />
-             <FormInput label="Alamat Sesuai KTP" value={newId.address} onChange={(v) => setNewId({...newId, address: v})} />
+             <FormInput label="Nomor Rekening" value={newId.bank_acc} onChange={(v: string) => setNewId({...newId, bank_acc: v})} required />
+             <FormInput label="Alamat Sesuai KTP" value={newId.address} onChange={(v: string) => setNewId({...newId, address: v})} />
              <SubmitButton label="Simpan Profile" />
           </form>
         </Modal>
@@ -332,11 +347,11 @@ function EntityModals({ modals, setModals, accounts, newAcc, setNewAcc, handleCr
       {modals.sample && (
         <Modal title="Request Sampel Baru" onClose={() => setModals({...modals, sample: false})}>
           <form onSubmit={handleCreateSample} className="space-y-4">
-             <AccountSelect accounts={accounts} value={newSample.account_id} onChange={(v) => setNewSample({...newSample, account_id: v})} />
-             <FormInput label="Nama Produk" value={newSample.product_name} onChange={(v) => setNewSample({...newSample, product_name: v})} required />
+             <AccountSelect accounts={accounts} value={newSample.account_id} onChange={(v: string) => setNewSample({...newSample, account_id: v})} />
+             <FormInput label="Nama Produk" value={newSample.product_name} onChange={(v: string) => setNewSample({...newSample, product_name: v})} required />
              <div className="grid grid-cols-2 gap-4">
-                <FormInput label="Shop Name" value={newSample.shop_name} onChange={(v) => setNewSample({...newSample, shop_name: v})} required />
-                <FormInput label="Brand" value={newSample.brand_name} onChange={(v) => setNewSample({...newSample, brand_name: v})} required />
+                <FormInput label="Shop Name" value={newSample.shop_name} onChange={(v: string) => setNewSample({...newSample, shop_name: v})} required />
+                <FormInput label="Brand" value={newSample.brand_name} onChange={(v: string) => setNewSample({...newSample, brand_name: v})} required />
              </div>
              <SubmitButton label="Record Request" />
           </form>
@@ -375,7 +390,7 @@ function SubmitButton({ label }: { label: string }) {
   return <button type="submit" className="w-full py-5 rounded-[1.5rem] bg-white text-slate-950 text-xs font-black uppercase tracking-[0.3em] shadow-xl active:scale-95 transition-all mt-4">{label}</button>
 }
 
-function FormInput({ label, value, onChange, type = 'text', required = false, placeholder = '' }: any) {
+function FormInput({ label, value, onChange, type = 'text', required = false, placeholder = '' }: { label: string, value: string, onChange: (v: string) => void, type?: string, required?: boolean, placeholder?: string }) {
   return (
     <div className="space-y-1.5">
       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{label} {required && <span className="text-rose-500">*</span>}</label>
@@ -384,7 +399,7 @@ function FormInput({ label, value, onChange, type = 'text', required = false, pl
   )
 }
 
-function NavItem({ icon, label, active = false, onClick }: any) {
+function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
   return (
     <button onClick={onClick} className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-all ${active ? 'bg-accent/10 text-accent font-semibold border border-accent/20 shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
       {icon}<span className="text-sm">{label}</span>
@@ -393,7 +408,7 @@ function NavItem({ icon, label, active = false, onClick }: any) {
   )
 }
 
-function MobileNavItem({ icon, label, active = false, onClick }: any) {
+function MobileNavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
   return (
     <button onClick={onClick} className={`flex flex-col items-center gap-1 flex-1 py-1 transition-all ${active ? 'text-accent' : 'text-slate-600'}`}>
       {icon}<span className="text-[9px] font-bold uppercase tracking-tighter">{label}</span>
@@ -401,7 +416,7 @@ function MobileNavItem({ icon, label, active = false, onClick }: any) {
   )
 }
 
-function StatCard({ label, value, sub, color = "text-white" }: any) {
+function StatCard({ label, value, sub, color = "text-white" }: { label: string, value: string, sub: string, color?: string }) {
   return (
     <div className="glass p-5 rounded-3xl border border-white/5 hover:border-white/10 transition-all">
       <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">{label}</p>
@@ -420,7 +435,7 @@ function LoadingPulse() {
   )
 }
 
-function SettingsView({ user, onLogout, onPushToggle, isPushEnabled }: any) {
+function SettingsView({ user, onLogout, onPushToggle, isPushEnabled }: { user: any, onLogout: () => void, onPushToggle: () => void, isPushEnabled: boolean }) {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="glass p-8 rounded-[2.5rem] border border-white/5">
