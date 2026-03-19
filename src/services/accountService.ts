@@ -3,7 +3,9 @@ import { createClient } from '@/utils/supabase/client'
 export interface ShopeeAccount {
   id: string
   user_id: string
-  username: string
+  email: string
+  password?: string
+  username?: string // Keep for backward compatibility if needed, but we'll use email
   created_at: string
 }
 
@@ -102,8 +104,8 @@ const _updateEntity = async <T>(table: string, id: string, payload: any): Promis
 // Service Methods
 export const accountService = {
   getAccounts: () => _getEntities<ShopeeAccount>('accounts'),
-  createAccount: (data: Omit<ShopeeAccount, 'id' | 'user_id' | 'created_at'>) => _createEntity<ShopeeAccount>('accounts', data),
-  updateAccount: (id: string, data: Partial<ShopeeAccount>) => _updateEntity<ShopeeAccount>('accounts', id, data),
+  createAccount: (data: { email: string, password?: string }) => _createEntity<ShopeeAccount>('accounts', data),
+  updateAccount: (id: string, data: { email?: string, password?: string }) => _updateEntity<ShopeeAccount>('accounts', id, data),
   deleteAccount: (id: string) => _deleteEntity('accounts', id),
 
   // Affiliate

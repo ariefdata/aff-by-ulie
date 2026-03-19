@@ -53,7 +53,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   const [editingEntity, setEditingEntity] = useState<{ type: keyof typeof modals, id: string } | null>(null)
 
   // Form States
-  const [newAcc, setNewAcc] = useState({ username: '' })
+  const [newAcc, setNewAcc] = useState({ email: '', password: '' })
   const [newAff, setNewAff] = useState({ master_id: '', email: '', password: '' })
   const [newPay, setNewPay] = useState({ master_id: '', name_ktp: '', nik: '', ktp_image_url: '' })
   const [newComm, setNewComm] = useState({ account_id: '', date: new Date().toISOString().split('T')[0], amount: 0 })
@@ -212,7 +212,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       )
       case 'ACCOUNTS': return (
         <div className="space-y-10 w-full overflow-hidden">
-          <SectionHeader title="Shopee Master Hubs" sub="Parent Asset Management" onAdd={() => { setEditingEntity(null); setNewAcc({username:''}); setModals({...modals, acc: true}) }} />
+          <SectionHeader title="Shopee Master Hubs" sub="Parent Asset Management" onAdd={() => { setEditingEntity(null); setNewAcc({email:'', password:''}); setModals({...modals, acc: true}) }} />
           <div className="space-y-12">
             {accounts.map(acc => {
               const myAffs = affiliateAccounts.filter(a => a.master_id === acc.id)
@@ -224,8 +224,8 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                       <div className="p-4 bg-accent/20 rounded-2xl text-accent"><LayoutDashboard size={24} /></div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className="text-lg md:text-xl font-bold text-white uppercase truncate">{acc.username}</h4>
-                          <CopyButton text={acc.username} />
+                          <h4 className="text-lg md:text-xl font-bold text-white uppercase truncate">{acc.email}</h4>
+                          <CopyButton text={acc.email} />
                         </div>
                         <div className="flex items-center gap-2">
                           <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">HUB: {acc.id.slice(0,8)}</p>
@@ -240,7 +240,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
                          <button onClick={() => { setEditingEntity(null); setNewPay({...newPay, master_id: acc.id}); setModals({...modals, pay: true}) }} className="flex-1 md:flex-none px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 border border-white/10 border-dashed transition-all">+ Shopee Pay</button>
                        </div>
                        <div className="flex gap-1.5 pl-2 border-l border-white/10 ml-1">
-                         <button onClick={() => { setEditingEntity({type:'acc', id: acc.id}); setNewAcc({username: acc.username}); setModals({...modals, acc: true}) }} className="p-2.5 md:p-2 bg-white/5 text-slate-400 rounded-xl hover:bg-white/10 transition-all border border-white/5" title="Edit Hub"><Edit size={16} /></button>
+                         <button onClick={() => { setEditingEntity({type:'acc', id: acc.id}); setNewAcc({email: acc.email, password: acc.password || ''}); setModals({...modals, acc: true}) }} className="p-2.5 md:p-2 bg-white/5 text-slate-400 rounded-xl hover:bg-white/10 transition-all border border-white/5" title="Edit Hub"><Edit size={16} /></button>
                          <button onClick={() => confirmDelete('Master Hub', () => accountService.deleteAccount(acc.id).then(() => setAccounts(accounts.filter(a => a.id !== acc.id))))} className="p-2.5 md:p-2 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10" title="Hapus Hub"><Trash2 size={16} /></button>
                        </div>
                     </div>
@@ -448,7 +448,7 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       <EntityModals 
         editingEntity={editingEntity} modals={modals} setModals={setModals} accounts={accounts}
         affiliateAccounts={affiliateAccounts} payAccounts={payAccounts}
-        newAcc={newAcc} setNewAcc={setNewAcc} handleCreateAcc={() => editingEntity ? handleUpdate('acc', accountService.updateAccount, newAcc, setAccounts, () => setNewAcc({username:''})) : createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({username:''}))}
+        newAcc={newAcc} setNewAcc={setNewAcc} handleCreateAcc={() => editingEntity ? handleUpdate('acc', accountService.updateAccount, newAcc, setAccounts, () => setNewAcc({email:'', password:''})) : createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({email:'', password:''}))}
         newAff={newAff} setNewAff={setNewAff} handleCreateAff={handleCreateAff}
         newPay={newPay} setNewPay={setNewPay} handleCreatePay={handleCreatePay}
         newComm={newComm} setNewComm={setNewComm} handleCreateComm={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('comm', accountService.updateCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', date: new Date().toISOString().split('T')[0], amount: 0})) : createEntity('comm', accountService.createCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', date: new Date().toISOString().split('T')[0], amount: 0})) }}
@@ -624,7 +624,8 @@ function EntityModals({ editingEntity, modals, setModals, accounts, affiliateAcc
       {modals.acc && (
         <Modal title={editingEntity ? "Edit Akun Master" : "Tambah Akun Master"} onClose={() => setModals({...modals, acc: false})}>
           <form onSubmit={(e) => { e.preventDefault(); handleCreateAcc() }} className="space-y-4">
-            <FormInput label="Username Shopee" value={newAcc.username} onChange={(v: string) => setNewAcc({...newAcc, username: v})} required />
+            <FormInput label="Email Master" type="email" value={newAcc.email} onChange={(v: string) => setNewAcc({...newAcc, email: v})} required />
+            <FormInput label="Password Master" type="password" value={newAcc.password} onChange={(v: string) => setNewAcc({...newAcc, password: v})} required />
             <SubmitButton label={editingEntity ? "Simpan Perubahan" : "Simpan Akun Master"} />
           </form>
         </Modal>
