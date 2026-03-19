@@ -8,7 +8,8 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { 
-  ShopeeAccount, Identity, Sim, Sample, Commission, 
+  ShopeeAccount, ShopeeAffiliateAccount, ShopeePayAccount,
+  Identity, Sim, Sample, Commission, 
   accountService 
 } from '@/services/accountService'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -31,6 +32,8 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
   
   // Master Datasets
   const [accounts, setAccounts] = useState<ShopeeAccount[]>(initialAccounts)
+  const [affiliateAccounts, setAffiliateAccounts] = useState<ShopeeAffiliateAccount[]>([])
+  const [payAccounts, setPayAccounts] = useState<ShopeePayAccount[]>([])
   const [identities, setIdentities] = useState<Identity[]>([])
   const [sims, setSims] = useState<Sim[]>([])
   const [samples, setSamples] = useState<Sample[]>([])
@@ -45,27 +48,33 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
   // Modals Visibility
   const [modals, setModals] = useState({
-    acc: false, comm: false, sim: false, id: false, sample: false
+    acc: false, aff: false, pay: false, comm: false, sim: false, id: false, sample: false
   })
   const [editingEntity, setEditingEntity] = useState<{ type: keyof typeof modals, id: string } | null>(null)
 
   // Form States
-  const [newAcc, setNewAcc] = useState({ username: '', email: '', password: '' })
+  const [newAcc, setNewAcc] = useState({ username: '' })
+  const [newAff, setNewAff] = useState({ master_id: '', email: '', password: '' })
+  const [newPay, setNewPay] = useState({ master_id: '', name_ktp: '', nik: '', ktp_image_url: '' })
   const [newComm, setNewComm] = useState({ account_id: '', date: new Date().toISOString().split('T')[0], amount: 0 })
-  const [newSim, setNewSim] = useState({ account_id: '', phone_number: '', expiry_date: '', has_whatsapp: false })
-  const [newId, setNewId] = useState({ account_id: '', nik: '', name_ktp: '', npwp: '', bank_name: '', bank_acc: '', address: '' })
+  const [newSim, setNewSim] = useState({ affiliate_id: '', pay_id: '', phone_number: '', expiry_date: '', has_whatsapp: false })
+  const [newId, setNewId] = useState({ affiliate_id: '', nik: '', name_ktp: '', npwp: '', bank_name: '', bank_acc: '', bank_acc_image_url: '', address: '' })
   const [newSample, setNewSample] = useState({ account_id: '', product_name: '', shop_name: '', brand_name: '' })
 
   // Initial Sync
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ids, sm, sp, cm] = await Promise.all([
+        const [affs, pays, ids, sm, sp, cm] = await Promise.all([
+          accountService.getAffiliateAccounts(),
+          accountService.getPayAccounts(),
           accountService.getIdentities(),
           accountService.getSims(),
           accountService.getSamples(),
           accountService.getCommissions()
         ])
+        setAffiliateAccounts(affs)
+        setPayAccounts(pays)
         setIdentities(ids)
         setSims(sm)
         setSamples(sp)
@@ -160,6 +169,12 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
     }
   }
 
+  const handleCreateAff = () => editingEntity ? handleUpdate('aff', accountService.updateAffiliateAccount, newAff, setAffiliateAccounts as any, () => setNewAff({master_id:'', email:'', password:''})) : createEntity('aff', accountService.createAffiliateAccount, newAff, setAffiliateAccounts as any, () => setNewAff({master_id:'', email:'', password:''}))
+  const handleCreatePay = () => editingEntity ? handleUpdate('pay', accountService.updatePayAccount, newPay, setPayAccounts as any, () => setNewPay({master_id:'', name_ktp:'', nik:'', ktp_image_url:''})) : createEntity('pay', accountService.createPayAccount, newPay, setPayAccounts as any, () => setNewPay({master_id:'', name_ktp:'', nik:'', ktp_image_url:''}))
+  const handleCreateId = (e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('id', accountService.updateIdentity, newId, setIdentities as any, () => setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''})) : createEntity('id', accountService.createIdentity, newId, setIdentities as any, () => setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''})) }
+  const handleCreateSim = (e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sim', accountService.updateSim, newSim, setSims as any, () => setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) : createEntity('sim', accountService.createSim, newSim, setSims as any, () => setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) }
+
+
   // View Renderers
   const renderContent = () => {
     if (loading) return <LoadingPulse />
@@ -168,10 +183,10 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       case 'DASHBOARD': return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-             <StatCard label="Shopee Assets" value={accounts.length.toString()} sub="Active Stores" />
+             <StatCard label="Master Assets" value={accounts.length.toString()} sub="Global Hubs" />
              <StatCard label="Total Commission" value={`Rp ${commissions.reduce((s,c)=>s+Number(c.amount),0).toLocaleString()}`} sub="All Time Verified" color="text-accent" />
-             <StatCard label="Active SIMs" value={sims.length.toString()} sub="Management" />
-             <StatCard label="Identity KYC" value={identities.length.toString()} sub="Profiles" />
+             <StatCard label="Affiliate Accounts" value={affiliateAccounts.length.toString()} sub="Sales Units" />
+             <StatCard label="Shopee Pay" value={payAccounts.length.toString()} sub="Wallets" />
           </div>
 
            {(deferredPrompt || isIOS) && (
@@ -197,62 +212,118 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
       )
       case 'ACCOUNTS': return (
         <div className="space-y-10 w-full overflow-hidden">
-          <SectionHeader title="Shopee Master Accounts" sub="Parent Asset Management" onAdd={() => { setEditingEntity(null); setNewAcc({username:'',email:'',password:''}); setModals({...modals, acc: true}) }} />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {accounts.map(acc => (
-              <EntityCard
-                key={acc.id}
-                title={acc.username}
-                sub={acc.email}
-                entityType="acc"
-                details={{ 'Email': acc.email, 'Password': acc.password }}
-                onDelete={() => confirmDelete('Akun', () => accountService.deleteAccount(acc.id).then(() => setAccounts(accounts.filter(a => a.id !== acc.id))))}
-                onEdit={() => { setEditingEntity({type:'acc', id: acc.id}); setNewAcc({username: acc.username, email: acc.email, password: acc.password}); setModals({...modals, acc: true}) }}
-              />
-            ))}
+          <SectionHeader title="Shopee Master Hubs" sub="Parent Asset Management" onAdd={() => { setEditingEntity(null); setNewAcc({username:''}); setModals({...modals, acc: true}) }} />
+          <div className="space-y-12">
+            {accounts.map(acc => {
+              const myAffs = affiliateAccounts.filter(a => a.master_id === acc.id)
+              const myPays = payAccounts.filter(p => p.master_id === acc.id)
+              return (
+                <div key={acc.id} className="space-y-6">
+                  <div className="flex items-center justify-between bg-white/5 p-4 rounded-3xl border border-white/10">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-accent/20 rounded-2xl text-accent"><LayoutDashboard size={20} /></div>
+                      <div>
+                        <h4 className="text-lg font-bold text-white uppercase">{acc.username}</h4>
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Master ID: {acc.id.slice(0,8)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <button onClick={() => { setEditingEntity(null); setNewAff({...newAff, master_id: acc.id}); setModals({...modals, aff: true}) }} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 border border-white/10">+ Affiliate</button>
+                       <button onClick={() => { setEditingEntity(null); setNewPay({...newPay, master_id: acc.id}); setModals({...modals, pay: true}) }} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 border border-white/10">+ Shopee Pay</button>
+                       <button onClick={() => confirmDelete('Master Account', () => accountService.deleteAccount(acc.id).then(() => setAccounts(accounts.filter(a => a.id !== acc.id))))} className="p-2 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4 md:pl-12 border-l border-white/10">
+                    {/* Affiliate Column */}
+                    <div className="space-y-4">
+                      <h5 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] ml-2">Units Affiliate ({myAffs.length})</h5>
+                      {myAffs.length === 0 ? <p className="text-[10px] text-slate-800 italic ml-2">Belum ada unit affiliate</p> : myAffs.map(aff => (
+                        <EntityCard
+                          key={aff.id}
+                          title={aff.email}
+                          sub="Shopee Affiliate"
+                          entityType="acc"
+                          details={{ 'Email': aff.email, 'Password': aff.password }}
+                          onDelete={() => confirmDelete('Affiliate', () => accountService.deleteAffiliateAccount(aff.id).then(() => setAffiliateAccounts(affiliateAccounts.filter(a => a.id !== aff.id))))}
+                          onEdit={() => { setEditingEntity({type:'aff', id: aff.id}); setNewAff({master_id: aff.master_id, email: aff.email, password: aff.password}); setModals({...modals, aff: true}) }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Pay Column */}
+                    <div className="space-y-4">
+                       <h5 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] ml-2">Shopee Pay ({myPays.length})</h5>
+                       {myPays.length === 0 ? <p className="text-[10px] text-slate-800 italic ml-2">Belum ada akun shopee pay</p> : myPays.map(pay => (
+                        <EntityCard
+                          key={pay.id}
+                          title={pay.name_ktp}
+                          sub={pay.nik}
+                          entityType="acc"
+                          onDelete={() => confirmDelete('Shopee Pay', () => accountService.deletePayAccount(pay.id).then(() => setPayAccounts(payAccounts.filter(a => a.id !== pay.id))))}
+                          onEdit={() => { setEditingEntity({type:'pay', id: pay.id}); setNewPay({master_id: pay.master_id, name_ktp: pay.name_ktp, nik: pay.nik, ktp_image_url: pay.ktp_image_url || ''}); setModals({...modals, pay: true}) }}
+                          details={pay.ktp_image_url ? { 'KTP Image': 'Click to view' } : {}}
+                          onClickDetail={pay.ktp_image_url ? () => window.open(pay.ktp_image_url, '_blank') : undefined}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )
       case 'SIMS': return (
         <div className="space-y-10 w-full overflow-hidden">
-          <SectionHeader title="SIM Connectivity" sub="Authentication & OTP Assets" onAdd={() => { setEditingEntity(null); setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false}); setModals({...modals, sim: true}) }} />
+          <SectionHeader title="SIM Connectivity" sub="Authentication & OTP Assets" onAdd={() => { setEditingEntity(null); setNewSim({affiliate_id:'', pay_id:'', phone_number:'', expiry_date:'', has_whatsapp: false}); setModals({...modals, sim: true}) }} />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sims.map(s => (
-              <EntityCard
-                key={s.id}
-                title={s.phone_number}
-                sub={accounts.find(a => a.id === s.account_id)?.username || 'No Parent'}
-                extra={s.expiry_date}
-                entityType="sim"
-                details={{ 'WA Status': s.has_whatsapp ? 'Terdaftar' : 'Tidak' }}
-                onDelete={() => confirmDelete('SIM', () => accountService.deleteSim(s.id).then(() => setSims(sims.filter(i => i.id !== s.id))))}
-                onEdit={() => { setEditingEntity({type:'sim', id: s.id}); setNewSim({account_id: s.account_id, phone_number: s.phone_number, expiry_date: s.expiry_date, has_whatsapp: s.has_whatsapp}); setModals({...modals, sim: true}) }}
-              />
-            ))}
+            {sims.map(s => {
+              const parentAff = affiliateAccounts.find(a => a.id === s.affiliate_id)
+              const parentPay = payAccounts.find(p => p.id === s.pay_id)
+              const parentLabel = parentAff ? `Aff: ${parentAff.email}` : parentPay ? `Pay: ${parentPay.name_ktp}` : 'No Parent'
+              return (
+                <EntityCard
+                  key={s.id}
+                  title={s.phone_number}
+                  sub={parentLabel}
+                  extra={s.expiry_date}
+                  entityType="sim"
+                  details={{ 'WA Status': s.has_whatsapp ? 'Terdaftar' : 'Tidak' }}
+                  onDelete={() => confirmDelete('SIM', () => accountService.deleteSim(s.id).then(() => setSims(sims.filter(i => i.id !== s.id))))}
+                  onEdit={() => { setEditingEntity({type:'sim', id: s.id}); setNewSim({affiliate_id: s.affiliate_id || '', pay_id: s.pay_id || '', phone_number: s.phone_number, expiry_date: s.expiry_date, has_whatsapp: s.has_whatsapp}); setModals({...modals, sim: true}) }}
+                />
+              )
+            })}
           </div>
         </div>
       )
       case 'IDENTITY': return (
         <div className="space-y-10 w-full overflow-hidden">
-          <SectionHeader title="KYC Profiles" sub="Account Verification Data" onAdd={() => { setEditingEntity(null); setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''}); setModals({...modals, id: true}) }} />
+          <SectionHeader title="KYC Profiles" sub="Account Verification Data" onAdd={() => { setEditingEntity(null); setNewId({affiliate_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', bank_acc_image_url:'', address:''}); setModals({...modals, id: true}) }} />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {identities.map(i => (
-              <EntityCard
-                key={i.id}
-                title={i.name_ktp}
-                sub={accounts.find(a => a.id === i.account_id)?.username || 'No Parent'}
-                entityType="id"
-                details={{
-                  'NIK': i.nik,
-                  'NPWP': i.npwp || '-',
-                  'Bank': i.bank_name,
-                  'Rekening': i.bank_acc,
-                  'Alamat': i.address || '-'
-                }}
-                onDelete={() => confirmDelete('Identitas', () => accountService.deleteIdentity(i.id).then(() => setIdentities(identities.filter(item => item.id !== i.id))))}
-                onEdit={() => { setEditingEntity({type:'id', id: i.id}); setNewId({account_id: i.account_id, nik: i.nik, name_ktp: i.name_ktp, npwp: i.npwp || '', bank_name: i.bank_name, bank_acc: i.bank_acc, address: i.address || ''}); setModals({...modals, id: true}) }}
-              />
-            ))}
+            {identities.map(i => {
+              const parentAff = affiliateAccounts.find(a => a.id === i.affiliate_id)
+              return (
+                <EntityCard
+                  key={i.id}
+                  title={i.name_ktp}
+                  sub={parentAff?.email || 'No Parent'}
+                  entityType="id"
+                  details={{
+                    'NIK': i.nik,
+                    'NPWP': i.npwp || '-',
+                    'Bank': i.bank_name,
+                    'Rekening': i.bank_acc,
+                    'Alamat': i.address || '-',
+                    'Doc Image': i.bank_acc_image_url ? 'Click to view' : ''
+                  }}
+                  onClickDetail={i.bank_acc_image_url ? () => window.open(i.bank_acc_image_url, '_blank') : undefined}
+                  onDelete={() => confirmDelete('Identitas', () => accountService.deleteIdentity(i.id).then(() => setIdentities(identities.filter(item => item.id !== i.id))))}
+                  onEdit={() => { setEditingEntity({type:'id', id: i.id}); setNewId({affiliate_id: i.affiliate_id, nik: i.nik, name_ktp: i.name_ktp, npwp: i.npwp || '', bank_name: i.bank_name, bank_acc: i.bank_acc, bank_acc_image_url: i.bank_acc_image_url || '', address: i.address || ''}); setModals({...modals, id: true}) }}
+                />
+              )
+            })}
           </div>
         </div>
       )
@@ -364,10 +435,13 @@ export default function DashboardClient({ initialUser, initialAccounts }: Dashbo
 
       <EntityModals 
         editingEntity={editingEntity} modals={modals} setModals={setModals} accounts={accounts}
-        newAcc={newAcc} setNewAcc={setNewAcc} handleCreateAcc={() => editingEntity ? handleUpdate('acc', accountService.updateAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''})) : createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({username:'',email:'',password:''}))}
+        affiliateAccounts={affiliateAccounts} payAccounts={payAccounts}
+        newAcc={newAcc} setNewAcc={setNewAcc} handleCreateAcc={() => editingEntity ? handleUpdate('acc', accountService.updateAccount, newAcc, setAccounts, () => setNewAcc({username:''})) : createEntity('acc', accountService.createAccount, newAcc, setAccounts, () => setNewAcc({username:''}))}
+        newAff={newAff} setNewAff={setNewAff} handleCreateAff={handleCreateAff}
+        newPay={newPay} setNewPay={setNewPay} handleCreatePay={handleCreatePay}
         newComm={newComm} setNewComm={setNewComm} handleCreateComm={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('comm', accountService.updateCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', date: new Date().toISOString().split('T')[0], amount: 0})) : createEntity('comm', accountService.createCommission, newComm, setCommissions as any, () => setNewComm({account_id:'', date: new Date().toISOString().split('T')[0], amount: 0})) }}
-        newSim={newSim} setNewSim={setNewSim} handleCreateSim={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sim', accountService.updateSim, newSim, setSims as any, () => setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) : createEntity('sim', accountService.createSim, newSim, setSims as any, () => setNewSim({account_id:'', phone_number:'', expiry_date:'', has_whatsapp: false})) }}
-        newId={newId} setNewId={setNewId} handleCreateId={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('id', accountService.updateIdentity, newId, setIdentities as any, () => setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''})) : createEntity('id', accountService.createIdentity, newId, setIdentities as any, () => setNewId({account_id:'', nik:'', name_ktp:'', npwp:'', bank_name:'', bank_acc:'', address:''})) }}
+        newSim={newSim} setNewSim={setNewSim} handleCreateSim={handleCreateSim}
+        newId={newId} setNewId={setNewId} handleCreateId={handleCreateId}
         newSample={newSample} setNewSample={setNewSample} handleCreateSample={(e: React.FormEvent) => { e.preventDefault(); editingEntity ? handleUpdate('sample', accountService.updateSample, newSample, setSamples as any, () => setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''})) : createEntity('sample', accountService.createSample, newSample, setSamples as any, () => setNewSample({account_id:'', product_name:'', shop_name:'', brand_name:''})) }}
       />
     </div>
@@ -392,6 +466,7 @@ interface EntityCardProps {
   status?: any
   onDelete: () => void
   onEdit: () => void
+  onClickDetail?: () => void
   entityType?: 'sim' | 'id' | 'sample' | 'acc'
 }
 
@@ -417,7 +492,7 @@ function CopyButton({ text, label }: { text: string, label?: string }) {
   )
 }
 
-function EntityCard({ title, sub, extra, details, onDelete, onEdit, entityType }: EntityCardProps) {
+function EntityCard({ title, sub, extra, details, onDelete, onEdit, onClickDetail, entityType }: EntityCardProps) {
   const getDaysLeft = (dateStr: string) => {
     const end = new Date(dateStr)
     const now = new Date()
@@ -465,12 +540,16 @@ function EntityCard({ title, sub, extra, details, onDelete, onEdit, entityType }
         {details && (
           <div className="pt-2 space-y-2 border-t border-white/5">
             {Object.entries(details).map(([k, v]) => v && (
-              <div key={k} className="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5 group/detail">
+              <div 
+                key={k} 
+                onClick={() => v === 'Click to view' && onClickDetail?.()}
+                className={`flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5 group/detail ${v === 'Click to view' ? 'cursor-pointer hover:bg-white/10' : ''}`}
+              >
                 <div className="min-w-0">
                   <p className="text-[8px] font-black text-slate-600 uppercase leading-none mb-1">{k}</p>
-                  <p className="text-[10px] text-slate-300 font-bold break-all leading-tight">{v}</p>
+                  <p className={`text-[10px] font-bold break-all leading-tight ${v === 'Click to view' ? 'text-accent underline' : 'text-slate-300'}`}>{v}</p>
                 </div>
-                <CopyButton text={v} label={k} />
+                {v !== 'Click to view' && <CopyButton text={v} label={k} />}
               </div>
             ))}
           </div>
@@ -495,32 +574,34 @@ function CredentialBox({ label, val, onCopy, isCopied }: { label: string, val: s
 
 interface EntityModalProps {
   editingEntity: any; modals: any; setModals: any; accounts: ShopeeAccount[];
+  affiliateAccounts: ShopeeAffiliateAccount[]; payAccounts: ShopeePayAccount[];
   newAcc: any; setNewAcc: any; handleCreateAcc: () => void;
+  newAff: any; setNewAff: any; handleCreateAff: () => void;
+  newPay: any; setNewPay: any; handleCreatePay: () => void;
   newComm: any; setNewComm: any; handleCreateComm: (e: React.FormEvent) => void;
   newSim: any; setNewSim: any; handleCreateSim: (e: React.FormEvent) => void;
   newId: any; setNewId: any; handleCreateId: (e: React.FormEvent) => void;
   newSample: any; setNewSample: any; handleCreateSample: (e: React.FormEvent) => void;
 }
 
-function EntityModals({ editingEntity, modals, setModals, accounts, newAcc, setNewAcc, handleCreateAcc, newComm, setNewComm, handleCreateComm, newSim, setNewSim, handleCreateSim, newId, setNewId, handleCreateId, newSample, setNewSample, handleCreateSample }: EntityModalProps) {
+function EntityModals({ editingEntity, modals, setModals, accounts, affiliateAccounts, payAccounts, newAcc, setNewAcc, handleCreateAcc, newAff, setNewAff, handleCreateAff, newPay, setNewPay, handleCreatePay, newComm, setNewComm, handleCreateComm, newSim, setNewSim, handleCreateSim, newId, setNewId, handleCreateId, newSample, setNewSample, handleCreateSample }: EntityModalProps) {
   return (
     <AnimatePresence>
       {modals.comm && (
         <Modal title={editingEntity ? "Edit Komisi" : "Catat Komisi Harian"} onClose={() => setModals({...modals, comm: false})}>
           <form onSubmit={handleCreateComm} className="space-y-4">
-             <AccountSelect accounts={accounts} value={newComm.account_id} onChange={(v: string) => setNewComm({...newComm, account_id: v})} />
              <div className="space-y-4">
-            <select value={newComm.account_id} onChange={e => setNewComm({...newComm, account_id: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-accent">
+            <select value={newComm.account_id} onChange={e => setNewComm({...newComm, account_id: e.target.value})} required className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-accent">
               <option value="" className="bg-slate-900">Pilih Akun Shopee</option>
               {accounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.username}</option>)}
             </select>
             <div className="space-y-1">
               <label className="text-[10px] text-slate-500 font-bold uppercase ml-2">Tanggal Cair</label>
-              <input type="date" value={newComm.date} onChange={e => setNewComm({...newComm, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
+              <input type="date" value={newComm.date} onChange={e => setNewComm({...newComm, date: e.target.value})} required className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] text-slate-500 font-bold uppercase ml-2">Nominal Komisi (IDR)</label>
-              <input type="number" placeholder="Nominal Rp" value={newComm.amount} onChange={e => setNewComm({...newComm, amount: Number(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
+              <input type="number" placeholder="Nominal Rp" value={newComm.amount} onChange={e => setNewComm({...newComm, amount: Number(e.target.value)})} required className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
             </div>
           </div>
              <SubmitButton label={editingEntity ? "Simpan Perubahan" : "Simpan Komisi"} />
@@ -529,12 +610,33 @@ function EntityModals({ editingEntity, modals, setModals, accounts, newAcc, setN
       )}
 
       {modals.acc && (
-        <Modal title={editingEntity ? "Edit Akun Master" : "Tambah Akun Shopee"} onClose={() => setModals({...modals, acc: false})}>
+        <Modal title={editingEntity ? "Edit Akun Master" : "Tambah Akun Master"} onClose={() => setModals({...modals, acc: false})}>
           <form onSubmit={(e) => { e.preventDefault(); handleCreateAcc() }} className="space-y-4">
             <FormInput label="Username Shopee" value={newAcc.username} onChange={(v: string) => setNewAcc({...newAcc, username: v})} required />
-            <FormInput label="Email Terkait" value={newAcc.email} onChange={(v: string) => setNewAcc({...newAcc, email: v})} required />
-            <FormInput label="Password" type="password" value={newAcc.password} onChange={(v: string) => setNewAcc({...newAcc, password: v})} required />
             <SubmitButton label={editingEntity ? "Simpan Perubahan" : "Simpan Akun Master"} />
+          </form>
+        </Modal>
+      )}
+
+      {modals.aff && (
+        <Modal title={editingEntity ? "Edit Akun Affiliate" : "Tambah Akun Affiliate"} onClose={() => setModals({...modals, aff: false})}>
+          <form onSubmit={(e) => { e.preventDefault(); handleCreateAff() }} className="space-y-4">
+            <AccountSelect accounts={accounts} value={newAff.master_id} onChange={(v: string) => setNewAff({...newAff, master_id: v})} />
+            <FormInput label="Email Shopee" value={newAff.email} onChange={(v: string) => setNewAff({...newAff, email: v})} required />
+            <FormInput label="Password" type="password" value={newAff.password} onChange={(v: string) => setNewAff({...newAff, password: v})} required />
+            <SubmitButton label={editingEntity ? "Simpan" : "Simpan Affiliate"} />
+          </form>
+        </Modal>
+      )}
+
+      {modals.pay && (
+        <Modal title={editingEntity ? "Edit Shopee Pay" : "Tambah Shopee Pay"} onClose={() => setModals({...modals, pay: false})}>
+          <form onSubmit={(e) => { e.preventDefault(); handleCreatePay() }} className="space-y-4">
+            <AccountSelect accounts={accounts} value={newPay.master_id} onChange={(v: string) => setNewPay({...newPay, master_id: v})} />
+            <FormInput label="Nama di KTP" value={newPay.name_ktp} onChange={(v: string) => setNewPay({...newPay, name_ktp: v})} required />
+            <FormInput label="NIK" value={newPay.nik} onChange={(v: string) => setNewPay({...newPay, nik: v})} required />
+            <FileUpload label="Foto KTP" onUpload={(url) => setNewPay({...newPay, ktp_image_url: url})} defaultValue={newPay.ktp_image_url} />
+            <SubmitButton label={editingEntity ? "Update Pay" : "Save Pay"} />
           </form>
         </Modal>
       )}
@@ -542,12 +644,38 @@ function EntityModals({ editingEntity, modals, setModals, accounts, newAcc, setN
       {modals.sim && (
         <Modal title={editingEntity ? "Edit Data SIM" : "Tambah Data SIM"} onClose={() => setModals({...modals, sim: false})}>
           <form onSubmit={handleCreateSim} className="space-y-4">
-             <AccountSelect accounts={accounts} value={newSim.account_id} onChange={(v: string) => setNewSim({...newSim, account_id: v})} />
-             <FormInput label="Nomor Telepon" value={newSim.phone_number} onChange={(v: string) => setNewSim({...newSim, phone_number: v})} required />
-             <FormInput label="Masa Aktif" type="date" value={newSim.expiry_date} onChange={(v: string) => setNewSim({...newSim, expiry_date: v})} required />
-             <div className="flex items-center gap-3 p-4 glass rounded-2xl border border-white/5">
-                <input type="checkbox" checked={newSim.has_whatsapp} onChange={(e) => setNewSim({...newSim, has_whatsapp: e.target.checked})} className="w-5 h-5 rounded accent-rose-500" />
-                <span className="text-sm text-slate-300 font-bold">Terdaftar WhatsApp</span>
+             <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-tighter ml-1 text-accent flex items-center gap-1">Parent Account *</label>
+                  <select 
+                    value={newSim.affiliate_id || newSim.pay_id || ''} 
+                    onChange={e => {
+                      const val = e.target.value
+                      const isAff = affiliateAccounts.some(a => a.id === val)
+                      setNewSim({
+                        ...newSim, 
+                        affiliate_id: isAff ? val : '', 
+                        pay_id: isAff ? '' : val
+                      })
+                    }} 
+                    required 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent/50 appearance-none cursor-pointer"
+                  >
+                    <option value="" className="bg-slate-900">-- Pilih Affiliate / Pay --</option>
+                    <optgroup label="Shopee Affiliate" className="bg-slate-900">
+                      {affiliateAccounts.map(a => <option key={a.id} value={a.id}>{a.email}</option>)}
+                    </optgroup>
+                    <optgroup label="Shopee Pay" className="bg-slate-900">
+                      {payAccounts.map(p => <option key={p.id} value={p.id}>{p.name_ktp} ({p.nik})</option>)}
+                    </optgroup>
+                  </select>
+                </div>
+                <FormInput label="Nomor Telepon" value={newSim.phone_number} onChange={(v: string) => setNewSim({...newSim, phone_number: v})} required />
+                <FormInput label="Masa Aktif" type="date" value={newSim.expiry_date} onChange={(v: string) => setNewSim({...newSim, expiry_date: v})} required />
+                <div className="flex items-center gap-3 p-4 glass rounded-2xl border border-white/5">
+                    <input type="checkbox" checked={newSim.has_whatsapp} onChange={(e) => setNewSim({...newSim, has_whatsapp: e.target.checked})} className="w-5 h-5 rounded accent-rose-500" />
+                    <span className="text-sm text-slate-300 font-bold">Terdaftar WhatsApp</span>
+                </div>
              </div>
              <SubmitButton label={editingEntity ? "Update SIM" : "Save SIM"} />
           </form>
@@ -557,15 +685,24 @@ function EntityModals({ editingEntity, modals, setModals, accounts, newAcc, setN
       {modals.id && (
         <Modal title={editingEntity ? "Edit Profile KYC" : "Lengkapi Identitas (KYC)"} onClose={() => setModals({...modals, id: false})}>
           <form onSubmit={handleCreateId} className="space-y-4 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
-             <AccountSelect accounts={accounts} value={newId.account_id} onChange={(v: string) => setNewId({...newId, account_id: v})} />
-             <div className="grid grid-cols-2 gap-4">
-                <FormInput label="NIK (KTP)" value={newId.nik} onChange={(v: string) => setNewId({...newId, nik: v})} required />
-                <FormInput label="Nama Lengkap" value={newId.name_ktp} onChange={(v: string) => setNewId({...newId, name_ktp: v})} required />
-                <FormInput label="NPWP" value={newId.npwp} onChange={(v: string) => setNewId({...newId, npwp: v})} />
-                <FormInput label="Bank" value={newId.bank_name} onChange={(v: string) => setNewId({...newId, bank_name: v})} required />
+             <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-tighter ml-1 text-accent flex items-center gap-1">Shopee Affiliate *</label>
+                  <select value={newId.affiliate_id} onChange={e => setNewId({...newId, affiliate_id: e.target.value})} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent/50 appearance-none cursor-pointer">
+                    <option value="" className="bg-slate-900">-- Pilih Akun Affiliate --</option>
+                    {affiliateAccounts.map(a => <option key={a.id} value={a.id} className="bg-slate-900">{a.email}</option>)}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormInput label="NIK (KTP)" value={newId.nik} onChange={(v: string) => setNewId({...newId, nik: v})} required />
+                    <FormInput label="Nama Lengkap" value={newId.name_ktp} onChange={(v: string) => setNewId({...newId, name_ktp: v})} required />
+                    <FormInput label="NPWP" value={newId.npwp} onChange={(v: string) => setNewId({...newId, npwp: v})} />
+                    <FormInput label="Bank" value={newId.bank_name} onChange={(v: string) => setNewId({...newId, bank_name: v})} required />
+                </div>
+                <FormInput label="Nomor Rekening" value={newId.bank_acc} onChange={(v: string) => setNewId({...newId, bank_acc: v})} required />
+                <FileUpload label="Foto Buku Tabungan / Rekening" onUpload={(url) => setNewId({...newId, bank_acc_image_url: url})} defaultValue={newId.bank_acc_image_url} />
+                <FormInput label="Alamat Sesuai KTP" value={newId.address} onChange={(v: string) => setNewId({...newId, address: v})} />
              </div>
-             <FormInput label="Nomor Rekening" value={newId.bank_acc} onChange={(v: string) => setNewId({...newId, bank_acc: v})} required />
-             <FormInput label="Alamat Sesuai KTP" value={newId.address} onChange={(v: string) => setNewId({...newId, address: v})} />
              <SubmitButton label={editingEntity ? "Update Profile" : "Simpan Profile"} />
           </form>
         </Modal>
@@ -615,6 +752,56 @@ function AccountSelect({ accounts, value, onChange }: { accounts: ShopeeAccount[
 function SubmitButton({ label }: { label: string }) {
   return <button type="submit" className="w-full py-5 rounded-[1.5rem] bg-white text-slate-950 text-xs font-black uppercase tracking-[0.3em] shadow-xl active:scale-95 transition-all mt-4">{label}</button>
 }
+
+function FileUpload({ label, onUpload, defaultValue = '' }: { label: string, onUpload: (url: string) => void, defaultValue?: string }) {
+  const [uploading, setUploading] = useState(false)
+  const [url, setUrl] = useState(defaultValue)
+
+  useEffect(() => { setUrl(defaultValue) }, [defaultValue])
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const publicUrl = await accountService.uploadDocument(file)
+      setUrl(publicUrl)
+      onUpload(publicUrl)
+    } catch (e: any) {
+      alert(`Upload failed: ${e.message}`)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{label}</label>
+      <div className="relative group overflow-hidden glass rounded-xl border border-white/10 p-4 flex flex-col items-center justify-center gap-2 hover:border-accent/40 transition-all min-h-[100px] cursor-pointer">
+        {uploading ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-6 h-6 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
+            <span className="text-[10px] font-black text-accent uppercase animate-pulse">Uploading...</span>
+          </div>
+        ) : url ? (
+          <div className="flex flex-col items-center gap-3 w-full">
+            <div className="relative w-full h-20 bg-black/40 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src={url} alt="Uploaded" className="object-contain h-full w-full" />
+            </div>
+            <button type="button" onClick={() => setUrl('')} className="text-[9px] font-black text-rose-500 uppercase hover:underline">Hapus & Ganti</button>
+          </div>
+        ) : (
+          <>
+            <Plus size={20} className="text-slate-500 group-hover:text-accent transition-colors" />
+            <span className="text-[11px] font-bold text-slate-600 group-hover:text-slate-400">Pilih File Gambar</span>
+            <input type="file" accept="image/*" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" />
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 
 function FormInput({ label, value, onChange, type = 'text', required = false, placeholder = '' }: { label: string, value: string, onChange: (v: string) => void, type?: string, required?: boolean, placeholder?: string }) {
   return (

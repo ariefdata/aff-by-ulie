@@ -4,20 +4,38 @@ export interface ShopeeAccount {
   id: string
   user_id: string
   username: string
+  created_at: string
+}
+
+export interface ShopeeAffiliateAccount {
+  id: string
+  master_id: string
+  user_id: string
   email: string
   password: string
+  created_at: string
+}
+
+export interface ShopeePayAccount {
+  id: string
+  master_id: string
+  user_id: string
+  name_ktp: string
+  nik: string
+  ktp_image_url?: string
   created_at: string
 }
 
 export interface Identity {
   id: string
   user_id: string
-  account_id: string
+  affiliate_id: string
   nik: string
   name_ktp: string
   npwp: string
   bank_name: string
   bank_acc: string
+  bank_acc_image_url?: string
   address: string
   created_at: string
 }
@@ -25,7 +43,8 @@ export interface Identity {
 export interface Sim {
   id: string
   user_id: string
-  account_id: string
+  affiliate_id?: string
+  pay_id?: string
   phone_number: string
   expiry_date: string
   has_whatsapp: boolean
@@ -82,36 +101,22 @@ const _updateEntity = async <T>(table: string, id: string, payload: any): Promis
 
 // Service Methods
 export const accountService = {
-  getAccounts: async () => {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('accounts')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (error) throw error
-    return data as ShopeeAccount[]
-  },
+  getAccounts: () => _getEntities<ShopeeAccount>('accounts'),
+  createAccount: (data: Omit<ShopeeAccount, 'id' | 'user_id' | 'created_at'>) => _createEntity<ShopeeAccount>('accounts', data),
+  updateAccount: (id: string, data: Partial<ShopeeAccount>) => _updateEntity<ShopeeAccount>('accounts', id, data),
+  deleteAccount: (id: string) => _deleteEntity('accounts', id),
 
-  createAccount: async (account: Omit<ShopeeAccount, 'id' | 'user_id' | 'created_at'>) => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data, error } = await supabase.from('accounts').insert([{ ...account, user_id: user?.id }]).select()
-    if (error) throw error
-    return data[0] as ShopeeAccount
-  },
+  // Affiliate
+  getAffiliateAccounts: () => _getEntities<ShopeeAffiliateAccount>('shopee_affiliate_accounts'),
+  createAffiliateAccount: (data: Omit<ShopeeAffiliateAccount, 'id' | 'user_id' | 'created_at'>) => _createEntity<ShopeeAffiliateAccount>('shopee_affiliate_accounts', data),
+  updateAffiliateAccount: (id: string, data: Partial<ShopeeAffiliateAccount>) => _updateEntity<ShopeeAffiliateAccount>('shopee_affiliate_accounts', id, data),
+  deleteAffiliateAccount: (id: string) => _deleteEntity('shopee_affiliate_accounts', id),
 
-  updateAccount: async (id: string, account: Partial<ShopeeAccount>) => {
-    const supabase = createClient()
-    const { data, error } = await supabase.from('accounts').update(account).eq('id', id).select()
-    if (error) throw error
-    return data[0] as ShopeeAccount
-  },
-
-  deleteAccount: async (id: string) => {
-    const supabase = createClient()
-    const { error } = await supabase.from('accounts').delete().eq('id', id)
-    if (error) throw error
-  },
+  // Pay
+  getPayAccounts: () => _getEntities<ShopeePayAccount>('shopee_pay_accounts'),
+  createPayAccount: (data: Omit<ShopeePayAccount, 'id' | 'user_id' | 'created_at'>) => _createEntity<ShopeePayAccount>('shopee_pay_accounts', data),
+  updatePayAccount: (id: string, data: Partial<ShopeePayAccount>) => _updateEntity<ShopeePayAccount>('shopee_pay_accounts', id, data),
+  deletePayAccount: (id: string) => _deleteEntity('shopee_pay_accounts', id),
 
   // Modular Entity CRUD
   getIdentities: () => _getEntities<Identity>('identities'),
@@ -132,5 +137,22 @@ export const accountService = {
   getCommissions: () => _getEntities<Commission>('commissions'),
   createCommission: (data: Omit<Commission, 'id' | 'user_id' | 'created_at'>) => _createEntity<Commission>('commissions', data),
   deleteCommission: (id: string) => _deleteEntity('commissions', id),
-  updateCommission: (id: string, data: Partial<Commission>) => _updateEntity<Commission>('commissions', id, data)
+  updateCommission: (id: string, data: Partial<Commission>) => _updateEntity<Commission>('commissions', id, data),
+
+  // File Upload
+  uploadDocument: async (file: File): Promise<string> => {
+    const supabase = createClient()
+    const fileName = `${Date.now()}_${file.name.replace(/\s/g, '_')}`
+    const { data, error } = await supabase.storage
+      .from('account-documents')
+      .upload(fileName, file)
+    
+    if (error) throw error
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('account-documents')
+      .getPublicUrl(data.path)
+      
+    return publicUrl
+  }
 }
