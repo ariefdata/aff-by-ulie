@@ -52,6 +52,29 @@ export interface Commission {
   created_at: string
 }
 
+// Generic Helpers
+const _getEntities = async <T>(table: string): Promise<T[]> => {
+  const supabase = createClient()
+  const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return data as T[]
+}
+
+const _createEntity = async <T>(table: string, payload: any): Promise<T> => {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data, error } = await supabase.from(table).insert([{ ...payload, user_id: user?.id }]).select()
+  if (error) throw error
+  return data[0] as T
+}
+
+const _deleteEntity = async (table: string, id: string): Promise<void> => {
+  const supabase = createClient()
+  const { error } = await supabase.from(table).delete().eq('id', id)
+  if (error) throw error
+}
+
+// Service Methods
 export const accountService = {
   getAccounts: async () => {
     const supabase = createClient()
@@ -78,41 +101,19 @@ export const accountService = {
   },
 
   // Modular Entity CRUD
-  getIdentities: async () => accountService._getEntities<Identity>('identities'),
-  createIdentity: async (data: Omit<Identity, 'id' | 'user_id' | 'created_at'>) => accountService._createEntity<Identity>('identities', data),
-  deleteIdentity: async (id: string) => accountService._deleteEntity('identities', id),
+  getIdentities: () => _getEntities<Identity>('identities'),
+  createIdentity: (data: Omit<Identity, 'id' | 'user_id' | 'created_at'>) => _createEntity<Identity>('identities', data),
+  deleteIdentity: (id: string) => _deleteEntity('identities', id),
 
-  getSims: async () => accountService._getEntities<Sim>('sims'),
-  createSim: async (data: Omit<Sim, 'id' | 'user_id' | 'created_at'>) => accountService._createEntity<Sim>('sims', data),
-  deleteSim: async (id: string) => accountService._deleteEntity('sims', id),
+  getSims: () => _getEntities<Sim>('sims'),
+  createSim: (data: Omit<Sim, 'id' | 'user_id' | 'created_at'>) => _createEntity<Sim>('sims', data),
+  deleteSim: (id: string) => _deleteEntity('sims', id),
 
-  getSamples: async () => accountService._getEntities<Sample>('samples'),
-  createSample: async (data: Omit<Sample, 'id' | 'user_id' | 'created_at'>) => accountService._createEntity<Sample>('samples', data),
-  deleteSample: async (id: string) => accountService._deleteEntity('samples', id),
+  getSamples: () => _getEntities<Sample>('samples'),
+  createSample: (data: Omit<Sample, 'id' | 'user_id' | 'created_at'>) => _createEntity<Sample>('samples', data),
+  deleteSample: (id: string) => _deleteEntity('samples', id),
 
-  getCommissions: async () => accountService._getEntities<Commission>('commissions'),
-  createCommission: async (data: Omit<Commission, 'id' | 'user_id' | 'created_at'>) => accountService._createEntity<Commission>('commissions', data),
-  deleteCommission: async (id: string) => accountService._deleteEntity('commissions', id),
-
-  // Generic Helpers (Now using accountService name instead of 'this')
-  _getEntities: async <T>(table: string) => {
-    const supabase = createClient()
-    const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false })
-    if (error) throw error
-    return data as T[]
-  },
-
-  _createEntity: async <T>(table: string, payload: any) => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data, error } = await supabase.from(table).insert([{ ...payload, user_id: user?.id }]).select()
-    if (error) throw error
-    return data[0] as T
-  },
-
-  _deleteEntity: async (table: string, id: string) => {
-    const supabase = createClient()
-    const { error } = await supabase.from(table).delete().eq('id', id)
-    if (error) throw error
-  }
+  getCommissions: () => _getEntities<Commission>('commissions'),
+  createCommission: (data: Omit<Commission, 'id' | 'user_id' | 'created_at'>) => _createEntity<Commission>('commissions', data),
+  deleteCommission: (id: string) => _deleteEntity('commissions', id)
 }
